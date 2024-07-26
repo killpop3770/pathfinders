@@ -6,19 +6,20 @@ use crate::settings::{Settings, Vec2f};
 mod settings;
 mod app;
 mod field;
+mod pathfinder;
 
 fn main() {
     let settings = Settings::new
         (
-            Vec2f { x: 400.0, y: 400.0 },
-            Vec2f { x: 20.0, y: 20.0 },
+            Vec2f { raw_x: 400.0, raw_y: 400.0 },
+            Vec2f { raw_x: 20.0, raw_y: 20.0 },
             20,
         );
 
     let mut window: PistonWindow = WindowSettings::new
         (
             "Pathfinder A* test",
-            [settings.window_size.x, settings.window_size.y],
+            [settings.window_size.raw_x, settings.window_size.raw_y],
         )
         .resizable(false)
         .build().unwrap();

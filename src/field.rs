@@ -1,8 +1,10 @@
 pub const EMPTY_FIELD_COLOR: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
 pub const EMPTY_CELL_COLOR: [f32; 4] = [0.95, 0.95, 0.95, 1.0];
-pub const CHOSEN_CELL_COLOR: [f32; 4] = [0.5, 0.5, 0.5, 1.0];
+pub const CHOSEN_CELL_COLOR: [f32; 4] = [0.0, 0.1, 0.0, 0.5];
 pub const BLOCKED_CELL_COLOR: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
+pub const VISITED_CELL_COLOR: [f32; 4] = [1.0, 0.0, 0.0, 0.5];
 
+#[derive(PartialEq, Debug)]
 pub struct CellCoordinates {
     pub x: u16,
     pub y: u16,
@@ -17,7 +19,7 @@ impl Field {
         Field {
             cells: (0..cells_number).map(|x| {
                 (0..cells_number).map(|y| {
-                    Cell::new()
+                    Cell::new(x, y)
                 }).collect()
             }).collect::<Vec<Vec<Cell>>>(),
         }
@@ -28,21 +30,25 @@ impl Field {
     }
 }
 
+#[derive(PartialEq)]
 pub struct Cell {
-    pub cell_type: CellType,
+    pub cell_type: CellState,
+    pub cell_coordinates: CellCoordinates,
 }
 
 impl Cell {
-    pub fn new() -> Cell {
+    pub fn new(x: u16, y: u16) -> Cell {
         Cell {
-            cell_type: CellType::Empty,
+            cell_type: CellState::Empty,
+            cell_coordinates: CellCoordinates { x, y },
         }
     }
 }
 
 #[derive(PartialEq)]
-pub enum CellType {
-    Blocked,
-    Chosen,
-    Empty,
+pub enum CellState {
+    Blocked, //obstacles -> Black?
+    Visited, //visited cells -> Red 0.5 alpha
+    Chosen, //chosen path -> Green 0.5 alpha
+    Empty, //empty cells -> Gray
 }

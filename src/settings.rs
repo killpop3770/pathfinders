@@ -1,6 +1,6 @@
 pub struct Vec2f {
-    pub x: f64,
-    pub y: f64,
+    pub raw_x: f64,
+    pub raw_y: f64,
 }
 
 pub struct Settings {

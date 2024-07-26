@@ -1,7 +1,7 @@
-use std::cmp::PartialEq;
 use piston_window::{clear, Context, G2d, MouseButton, rectangle};
 
-use crate::field::{BLOCKED_CELL_COLOR, CellCoordinates, CellType, CHOSEN_CELL_COLOR, EMPTY_CELL_COLOR, EMPTY_FIELD_COLOR, Field};
+use crate::field::{BLOCKED_CELL_COLOR, CellCoordinates, CellState, CHOSEN_CELL_COLOR, EMPTY_CELL_COLOR, EMPTY_FIELD_COLOR, Field};
+use crate::pathfinder::check_neighbors;
 use crate::settings::{Settings, Vec2f};
 
 pub struct App {
@@ -16,7 +16,7 @@ impl App {
         App {
             field: Field::new(settings.cells_number),
             settings,
-            mouse_coordinates: Vec2f { x: 0.0, y: 0.0 },
+            mouse_coordinates: Vec2f { raw_x: 0.0, raw_y: 0.0 },
             selected_cell: None,
         }
     }
@@ -29,7 +29,7 @@ impl App {
                 let cell = self.field.get_cell(x, y);
 
                 let color;
-                if cell.cell_type == CellType::Chosen {
+                if cell.cell_type == CellState::Chosen {
                     color = CHOSEN_CELL_COLOR;
                 } else {
                     color = EMPTY_CELL_COLOR;
@@ -38,10 +38,10 @@ impl App {
                 rectangle(
                     color,
                     [
-                        (x as f64) * self.settings.cell_size.x,
-                        (y as f64) * self.settings.cell_size.y,
-                        self.settings.cell_size.x,
-                        self.settings.cell_size.y
+                        (x as f64) * self.settings.cell_size.raw_x,
+                        (y as f64) * self.settings.cell_size.raw_y,
+                        self.settings.cell_size.raw_x,
+                        self.settings.cell_size.raw_y
                     ],
                     context.transform,
                     g2d,
@@ -55,10 +55,10 @@ impl App {
             rectangle(
                 BLOCKED_CELL_COLOR,
                 [
-                    (n as f64) * self.settings.cell_size.x - border_width,
+                    (n as f64) * self.settings.cell_size.raw_x - border_width,
                     0.0,
                     border_width,
-                    self.settings.window_size.y,
+                    self.settings.window_size.raw_y,
                 ],
                 context.transform,
                 g2d,
@@ -68,8 +68,8 @@ impl App {
                 BLOCKED_CELL_COLOR,
                 [
                     0.0,
-                    (n as f64) * self.settings.cell_size.y - border_width,
-                    self.settings.window_size.x,
+                    (n as f64) * self.settings.cell_size.raw_y - border_width,
+                    self.settings.window_size.raw_x,
                     border_width,
                 ],
                 context.transform,
@@ -79,15 +79,15 @@ impl App {
 
         if let Some(ref coordinates) = self.selected_cell {
             let cell = self.field.get_cell(coordinates.x, coordinates.y);
-            cell.cell_type = CellType::Chosen;
+            cell.cell_type = CellState::Chosen;
             rectangle
                 (
                     CHOSEN_CELL_COLOR,
                     [
-                        (coordinates.x as f64) * self.settings.cell_size.x,
-                        (coordinates.y as f64) * self.settings.cell_size.y,
-                        self.settings.cell_size.x,
-                        self.settings.cell_size.y,
+                        (coordinates.x as f64) * self.settings.cell_size.raw_x,
+                        (coordinates.y as f64) * self.settings.cell_size.raw_y,
+                        self.settings.cell_size.raw_x,
+                        self.settings.cell_size.raw_y,
                     ],
                     context.transform,
                     g2d,
@@ -97,20 +97,25 @@ impl App {
 
     pub fn on_mouse_click(&mut self, button: &MouseButton) {
         if let &MouseButton::Left = button {
-            println!("{} {}",
-                     (self.mouse_coordinates.x / self.settings.cell_size.x) as u16,
-                     (self.mouse_coordinates.y / self.settings.cell_size.y) as u16,
-            );
+            let x = (self.mouse_coordinates.raw_x / self.settings.cell_size.raw_x) as u16;
+            let y = (self.mouse_coordinates.raw_y / self.settings.cell_size.raw_y) as u16;
+            println!("{:?}", self.field.get_cell(x, y).cell_coordinates);
+            println!("{:?}", check_neighbors(CellCoordinates { x, y }, &self.field));
 
-            self.selected_cell = Some(CellCoordinates {
-                x: (self.mouse_coordinates.x / self.settings.cell_size.x) as u16,
-                y: (self.mouse_coordinates.y / self.settings.cell_size.y) as u16,
-            });
+            // println!("{} {}",
+            //          (self.mouse_coordinates.x / self.settings.cell_size.x) as u16,
+            //          (self.mouse_coordinates.y / self.settings.cell_size.y) as u16,
+            // );
+
+            // self.selected_cell = Some(CellCoordinates {
+            //     x: (self.mouse_coordinates.x / self.settings.cell_size.x) as u16,
+            //     y: (self.mouse_coordinates.y / self.settings.cell_size.y) as u16,
+            // });
         }
     }
 
     pub fn on_mouse_move(&mut self, args: &[f64; 2]) {
-        self.mouse_coordinates.x = args[0];
-        self.mouse_coordinates.y = args[1];
+        self.mouse_coordinates.raw_x = args[0];
+        self.mouse_coordinates.raw_y = args[1];
     }
 }
