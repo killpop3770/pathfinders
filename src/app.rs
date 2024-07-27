@@ -1,7 +1,12 @@
-use piston_window::{clear, Context, G2d, MouseButton, rectangle};
+use crate::cell::{CellCoordinates, CellState};
+use piston_window::{clear, rectangle, Context, G2d, MouseButton};
+use std::ops::Deref;
 
-use crate::field::{BLOCKED_CELL_COLOR, CellCoordinates, CellState, CHOSEN_CELL_COLOR, EMPTY_CELL_COLOR, EMPTY_FIELD_COLOR, Field};
-use crate::pathfinder::check_neighbors;
+use crate::field::{
+    Field, BLOCKED_CELL_COLOR, CHOSEN_CELL_COLOR, EMPTY_CELL_COLOR, EMPTY_FIELD_COLOR,
+    VISITED_CELL_COLOR,
+};
+use crate::pathfinder::pathfinder_a_star;
 use crate::settings::{Settings, Vec2f};
 
 pub struct App {
@@ -16,9 +21,16 @@ impl App {
         App {
             field: Field::new(settings.cells_number),
             settings,
-            mouse_coordinates: Vec2f { raw_x: 0.0, raw_y: 0.0 },
+            mouse_coordinates: Vec2f {
+                raw_x: 0.0,
+                raw_y: 0.0,
+            },
             selected_cell: None,
         }
+    }
+
+    pub fn randomize_blocks_on_field(&mut self) {
+        self.field.make_noise();
     }
 
     pub fn render_field(&mut self, context: Context, g2d: &mut G2d) {
@@ -28,12 +40,12 @@ impl App {
             for y in 0..self.settings.cells_number {
                 let cell = self.field.get_cell(x, y);
 
-                let color;
-                if cell.cell_type == CellState::Chosen {
-                    color = CHOSEN_CELL_COLOR;
-                } else {
-                    color = EMPTY_CELL_COLOR;
-                }
+                let color: [f32; 4] = match cell.borrow_mut().cell_state {
+                    CellState::Blocked => BLOCKED_CELL_COLOR,
+                    CellState::Visited => VISITED_CELL_COLOR,
+                    CellState::Chosen => CHOSEN_CELL_COLOR,
+                    CellState::Empty => EMPTY_CELL_COLOR,
+                };
 
                 rectangle(
                     color,
@@ -41,7 +53,7 @@ impl App {
                         (x as f64) * self.settings.cell_size.raw_x,
                         (y as f64) * self.settings.cell_size.raw_y,
                         self.settings.cell_size.raw_x,
-                        self.settings.cell_size.raw_y
+                        self.settings.cell_size.raw_y,
                     ],
                     context.transform,
                     g2d,
@@ -78,20 +90,19 @@ impl App {
         }
 
         if let Some(ref coordinates) = self.selected_cell {
-            let cell = self.field.get_cell(coordinates.x, coordinates.y);
-            cell.cell_type = CellState::Chosen;
-            rectangle
-                (
-                    CHOSEN_CELL_COLOR,
-                    [
-                        (coordinates.x as f64) * self.settings.cell_size.raw_x,
-                        (coordinates.y as f64) * self.settings.cell_size.raw_y,
-                        self.settings.cell_size.raw_x,
-                        self.settings.cell_size.raw_y,
-                    ],
-                    context.transform,
-                    g2d,
-                )
+            let mut cell = self.field.get_cell(coordinates.x, coordinates.y);
+            cell.borrow_mut().cell_state = CellState::Chosen;
+            rectangle(
+                CHOSEN_CELL_COLOR,
+                [
+                    (coordinates.x as f64) * self.settings.cell_size.raw_x,
+                    (coordinates.y as f64) * self.settings.cell_size.raw_y,
+                    self.settings.cell_size.raw_x,
+                    self.settings.cell_size.raw_y,
+                ],
+                context.transform,
+                g2d,
+            )
         }
     }
 
@@ -99,8 +110,21 @@ impl App {
         if let &MouseButton::Left = button {
             let x = (self.mouse_coordinates.raw_x / self.settings.cell_size.raw_x) as u16;
             let y = (self.mouse_coordinates.raw_y / self.settings.cell_size.raw_y) as u16;
-            println!("{:?}", self.field.get_cell(x, y).cell_coordinates);
-            println!("{:?}", check_neighbors(CellCoordinates { x, y }, &self.field));
+            let cell_ref_start = self.field.get_cell(x, y);
+            // println!("{:?}", cell_ref_start.borrow_mut().check_neighbors(&mut self.field));
+            let cell_ref_end = self.field.get_cell(19, 19);
+
+            let res = pathfinder_a_star(cell_ref_start, cell_ref_end, &mut self.field);
+
+            if let Some(cells) = res {
+                cells
+                    .iter()
+                    .map(|pos| {
+                        let a = self.field.get_cell(pos.x, pos.y);
+                        a.borrow_mut().cell_state = CellState::Chosen;
+                    })
+                    .count();
+            }
 
             // println!("{} {}",
             //          (self.mouse_coordinates.x / self.settings.cell_size.x) as u16,

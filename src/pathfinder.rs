@@ -1,80 +1,93 @@
-use lazy_static::lazy_static;
-use crate::field::{Cell, CellCoordinates, CellState, Field};
+use std::collections::HashMap;
+use std::rc::Rc;
 
-pub fn pathfinder_a_star(start: &mut Cell, end: &mut Cell, field: Field) -> Option<Vec<Cell>> {
-    let mut reachable_cells: Vec<&Cell> = Vec::new();
-    let explored_cells: Vec<Cell> = Vec::new();
+use crate::cell::{Cell, CellState};
+use crate::field::{Field, Tile};
 
-    start.cell_type = CellState::Visited;
-    reachable_cells.push(start);
+#[derive(Eq, Hash, PartialEq, Clone)]
+pub struct TestCoord {
+    pub x: u16,
+    pub y: u16,
+}
 
+pub fn pathfinder_a_star(start: Tile, end: Tile, field: &mut Field) -> Option<Vec<TestCoord>> {
+    let mut reachable_cells: Vec<Tile> = Vec::new();
+    let mut visited_cells: Vec<Tile> = Vec::new();
+    let mut ancestral_cells: HashMap<TestCoord, TestCoord> = HashMap::new();
+
+    start.borrow_mut().cell_state = CellState::Visited;
+    reachable_cells.push(start.clone());
+
+    println!("Pathfinder start!");
 
     while !reachable_cells.is_empty() {
-        let current_cell = chose_cell(&reachable_cells);
-        // как проверить есть ли у ячейки соседи по бокам и диагонолям?
+        // std::thread::sleep(Duration::from_millis(10));
+        if let Some(current_cell) = choose_cell(&reachable_cells) {
+            println!(
+                "Cell: x:{} y:{}",
+                current_cell.borrow().cell_coordinates.x,
+                current_cell.borrow().cell_coordinates.y
+            );
 
-        if current_cell == end {
-            build_path();
+            if current_cell == end {
+                //TODO: rewrite TestCoord to Tile and fix runtime bug!!!
+                let mut cell = TestCoord {
+                    x: end.borrow().cell_coordinates.x,
+                    y: end.borrow().cell_coordinates.y,
+                };
+                let mut path: Vec<TestCoord> = Vec::new();
+
+                while let Some(parent) = ancestral_cells.get(&cell) {
+                    path.push(cell.to_owned());
+                    cell = TestCoord {
+                        x: parent.x,
+                        y: parent.y,
+                    };
+                }
+                path.push(TestCoord {
+                    x: start.borrow().cell_coordinates.x,
+                    y: start.borrow().cell_coordinates.y,
+                });
+                path.reverse();
+
+                println!("OK!");
+                return Some(path);
+            }
+
+            let neighbors = current_cell.borrow_mut().check_neighbors(field);
+            for neighbor_cell in neighbors {
+                if visited_cells.contains(&neighbor_cell) {
+                    continue;
+                }
+
+                neighbor_cell.borrow_mut().cell_state = CellState::Visited;
+                reachable_cells.remove(0);
+                reachable_cells.push(neighbor_cell.to_owned());
+                visited_cells.push(neighbor_cell.to_owned());
+                let a = TestCoord {
+                    x: neighbor_cell.borrow().cell_coordinates.x,
+                    y: neighbor_cell.borrow().cell_coordinates.y,
+                };
+                let b = TestCoord {
+                    x: current_cell.borrow().cell_coordinates.x,
+                    y: current_cell.borrow().cell_coordinates.y,
+                };
+                ancestral_cells.insert(a, b);
+            }
         }
     }
 
-    Some(vec![])
+    None
 }
 
 fn build_path() -> Option<Vec<Cell>> {
     Some(vec![])
 }
 
-lazy_static! {
-    static ref TEST_ARR: [Cell; 1] = [Cell::new(0,0)];
-}
-fn chose_cell<'a>(reachable_cells: &Vec<&Cell>) -> &'a Cell {
-    let ret = &TEST_ARR[0];
-    ret
-}
-
-pub fn check_neighbors(coord: CellCoordinates, field: &Field) {
-    println!("{} {}", coord.x, coord.y);
-    let main_x = coord.x as i16;
-    let main_y = coord.y as i16;
-
-    for side in 0..4 {
-        for step in 0..2 {
-            if side == 0 {
-                if is_valid_coordinate(main_x + 1) && is_valid_coordinate(main_y - step) {
-                    println!("It's ok at {}:{}", main_x + 1, main_y - step)
-                }
-            } else if side == 1 {
-                if is_valid_coordinate(main_x - step) && is_valid_coordinate(main_y - 1) {
-                    println!("It's ok at {}:{}", main_x - step, main_y - 1)
-                }
-            } else if side == 2 {
-                if is_valid_coordinate(main_x - 1) && is_valid_coordinate(main_y + step) {
-                    println!("It's ok at {}:{}", main_x - 1, main_y + step)
-                }
-            } else if side == 3 {
-                if is_valid_coordinate(main_x + step) && is_valid_coordinate(main_y + 1) {
-                    println!("It's ok at {}:{}", main_x + step, main_y + 1)
-                }
-            }
-        }
+fn choose_cell(reachable_cells: &Vec<Tile>) -> Option<Tile> {
+    let rand = rand::random::<u16>() as usize;
+    match reachable_cells.get(rand) {
+        None => None,
+        Some(s) => Some(Rc::clone(s)),
     }
-
-    // It's ok at 3:2
-    // It's ok at 3:1
-    // It's ok at 2:1
-    // It's ok at 1:1
-    // It's ok at 1:2
-    // It's ok at 1:3
-    // It's ok at 2:3
-    // It's ok at 3:3
-
-
-    //  1;1   2;1    3;1
-    //  1;2   2;2    3;2
-    //  1;3   2;3    3;3
-}
-
-fn is_valid_coordinate(target_pos: i16) -> bool {
-    target_pos >= 0 && target_pos < 20
 }
