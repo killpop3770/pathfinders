@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::ops::Deref;
 use std::rc::Rc;
 
 use crate::cell::{Cell, CellState};
@@ -23,7 +24,6 @@ pub fn pathfinder_a_star(start: Tile, end: Tile, field: &mut Field) -> Option<Ve
             );
 
             if current_cell == end {
-                //TODO: get rid of unnecessary call to target struct Cell from Tile! rewrite Deref
                 //TODO: fix runtime bug ! check unreachable???
                 //TODO: decompose render function! render by step of this loop !!
                 let mut cell = end;
@@ -65,6 +65,6 @@ fn choose_cell(reachable_cells: &Vec<Tile>) -> Option<Tile> {
     let rand = rand::random::<u16>() as usize;
     match reachable_cells.get(rand) {
         None => None,
-        Some(tile) => Some(Tile(Rc::clone(&tile.0))),
+        Some(tile) => Some(Tile::new(Rc::clone(tile.deref()))),
     }
 }

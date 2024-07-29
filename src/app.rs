@@ -1,3 +1,4 @@
+use std::ops::Deref;
 use piston_window::{clear, rectangle, Context, G2d, MouseButton};
 
 use crate::cell::{CellCoordinates, CellState};
@@ -119,7 +120,7 @@ impl App {
                 cells
                     .iter()
                     .map(|tile| {
-                        tile.0.borrow_mut().cell_state = CellState::Chosen;
+                        tile.deref().borrow_mut().cell_state = CellState::Chosen;
                     })
                     .count();
             }

@@ -1,3 +1,4 @@
+use std::ops::Deref;
 use std::rc::Rc;
 
 use crate::field::{Field, Tile};
@@ -54,7 +55,7 @@ impl Cell {
             let mut current_cell_ref = field.get_cell(x as u16, y as u16);
             let mut cell = current_cell_ref.borrow_mut();
             cell.cell_state = CellState::Visited;
-            Tile(Rc::clone(&current_cell_ref.0))
+            Tile::new(Rc::clone(current_cell_ref.deref()))
         }
 
         println!("Neghbors: {}", neighbors.len());

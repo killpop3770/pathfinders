@@ -15,12 +15,18 @@ pub const BLOCKED_CELL_COLOR: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
 pub const VISITED_CELL_COLOR: [f32; 4] = [1.0, 0.0, 0.0, 0.5];
 
 #[derive(Eq, PartialEq, Clone)]
-pub struct Tile(pub(crate) Rc<RefCell<Cell>>);
+pub struct Tile(Rc<RefCell<Cell>>);
+
+impl Tile {
+    pub fn new(cell: Rc<RefCell<Cell>>) -> Tile {
+        Tile(cell)
+    }
+}
 
 impl Deref for Tile {
-    type Target = RefCell<Cell>;
+    type Target = Rc<RefCell<Cell>>;
     fn deref(&self) -> &Self::Target {
-        self.0.deref()
+        &self.0
     }
 }
 
@@ -49,8 +55,8 @@ impl Field {
         }
     }
     pub fn get_cell(&self, x: u16, y: u16) -> Tile {
-        let tile_ref = &self.cells[x as usize][y as usize].0;
-        Tile(Rc::clone(&tile_ref))
+        let tile_ref = self.cells[x as usize][y as usize].deref();
+        Tile(Rc::clone(tile_ref))
     }
 
     //Check position by bounds
