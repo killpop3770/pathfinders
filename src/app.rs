@@ -1,7 +1,6 @@
-use crate::cell::{CellCoordinates, CellState};
 use piston_window::{clear, rectangle, Context, G2d, MouseButton};
-use std::ops::Deref;
 
+use crate::cell::{CellCoordinates, CellState};
 use crate::field::{
     Field, BLOCKED_CELL_COLOR, CHOSEN_CELL_COLOR, EMPTY_CELL_COLOR, EMPTY_FIELD_COLOR,
     VISITED_CELL_COLOR,
@@ -110,8 +109,8 @@ impl App {
         if let &MouseButton::Left = button {
             let x = (self.mouse_coordinates.raw_x / self.settings.cell_size.raw_x) as u16;
             let y = (self.mouse_coordinates.raw_y / self.settings.cell_size.raw_y) as u16;
+
             let cell_ref_start = self.field.get_cell(x, y);
-            // println!("{:?}", cell_ref_start.borrow_mut().check_neighbors(&mut self.field));
             let cell_ref_end = self.field.get_cell(19, 19);
 
             let res = pathfinder_a_star(cell_ref_start, cell_ref_end, &mut self.field);
@@ -119,22 +118,11 @@ impl App {
             if let Some(cells) = res {
                 cells
                     .iter()
-                    .map(|pos| {
-                        let a = self.field.get_cell(pos.x, pos.y);
-                        a.borrow_mut().cell_state = CellState::Chosen;
+                    .map(|tile| {
+                        tile.0.borrow_mut().cell_state = CellState::Chosen;
                     })
                     .count();
             }
-
-            // println!("{} {}",
-            //          (self.mouse_coordinates.x / self.settings.cell_size.x) as u16,
-            //          (self.mouse_coordinates.y / self.settings.cell_size.y) as u16,
-            // );
-
-            // self.selected_cell = Some(CellCoordinates {
-            //     x: (self.mouse_coordinates.x / self.settings.cell_size.x) as u16,
-            //     y: (self.mouse_coordinates.y / self.settings.cell_size.y) as u16,
-            // });
         }
     }
 

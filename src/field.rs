@@ -1,6 +1,9 @@
 use std::cell::RefCell;
+use std::hash::{Hash, Hasher};
+use std::ops::Deref;
 use std::rc::Rc;
 
+use rand::distributions::uniform::SampleBorrow;
 use rand::Rng;
 
 use crate::cell::{Cell, CellState};
@@ -11,7 +14,21 @@ pub const CHOSEN_CELL_COLOR: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
 pub const BLOCKED_CELL_COLOR: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
 pub const VISITED_CELL_COLOR: [f32; 4] = [1.0, 0.0, 0.0, 0.5];
 
-pub type Tile = Rc<RefCell<Cell>>;
+#[derive(Eq, PartialEq, Clone)]
+pub struct Tile(pub(crate) Rc<RefCell<Cell>>);
+
+impl Deref for Tile {
+    type Target = RefCell<Cell>;
+    fn deref(&self) -> &Self::Target {
+        self.0.deref()
+    }
+}
+
+impl Hash for Tile {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.borrow().hash(state);
+    }
+}
 
 pub struct Field {
     pub cells: Vec<Vec<Tile>>,
@@ -23,14 +40,17 @@ impl Field {
             cells: (0..cells_number)
                 .map(|x| {
                     (0..cells_number)
-                        .map(|y| Rc::new(RefCell::new(Cell::new(x, y))))
+                        .map(|y| Tile {
+                            0: Rc::new(RefCell::new(Cell::new(x, y))),
+                        })
                         .collect()
                 })
                 .collect::<Vec<Vec<Tile>>>(),
         }
     }
     pub fn get_cell(&self, x: u16, y: u16) -> Tile {
-        Rc::clone(&self.cells[x as usize][y as usize])
+        let tile_ref = &self.cells[x as usize][y as usize].0;
+        Tile(Rc::clone(&tile_ref))
     }
 
     //Check position by bounds
@@ -50,7 +70,7 @@ impl Field {
     //Create blocks on a field/map
     pub fn make_noise(&mut self) {
         let mut rng = rand::thread_rng();
-        for _ in 0..50 {
+        for _ in 0..100 {
             let pos_x = rng.gen_range(0..self.cells.len() as u16);
             let pos_y = rng.gen_range(0..self.cells.len() as u16);
             self.get_cell(pos_x, pos_y).borrow_mut().cell_state = CellState::Blocked;

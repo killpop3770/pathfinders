@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::field::{Field, Tile};
@@ -17,7 +16,7 @@ impl Cell {
         }
     }
 
-    // 8-neighbors search algorithm
+    // 4/8-neighbors search algorithm
     pub fn check_neighbors(&self, field: &mut Field) -> Vec<Tile> {
         let main_x = self.cell_coordinates.x as i16;
         let main_y = self.cell_coordinates.y as i16;
@@ -25,7 +24,8 @@ impl Cell {
         let mut neighbors: Vec<Tile> = Vec::new();
 
         for side in 0..4 {
-            for step in 0..2 {
+            for step in 0..1 {
+                //nest cell
                 if side == 0 {
                     let (x, y) = (main_x + 1, main_y - step);
                     if field.is_valid_coordinate(x, y) && field.is_valid_to_path(x, y) {
@@ -54,7 +54,7 @@ impl Cell {
             let mut current_cell_ref = field.get_cell(x as u16, y as u16);
             let mut cell = current_cell_ref.borrow_mut();
             cell.cell_state = CellState::Visited;
-            Rc::clone(&current_cell_ref)
+            Tile(Rc::clone(&current_cell_ref.0))
         }
 
         println!("Neghbors: {}", neighbors.len());
