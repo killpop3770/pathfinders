@@ -1,11 +1,9 @@
+use crate::cell::{Cell, CellState};
+use rand::Rng;
 use std::cell::RefCell;
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use std::rc::Rc;
-
-use rand::Rng;
-
-use crate::cell::{Cell, CellState};
 
 pub const EMPTY_FIELD_COLOR: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
 pub const EMPTY_CELL_COLOR: [f32; 4] = [0.95, 0.95, 0.95, 1.0];
@@ -13,16 +11,12 @@ pub const CHOSEN_CELL_COLOR: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
 pub const BLOCKED_CELL_COLOR: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
 pub const VISITED_CELL_COLOR: [f32; 4] = [1.0, 0.0, 0.0, 0.5];
 
-#[derive(Eq, PartialEq, Clone)]
-pub struct Tile(Rc<RefCell<Cell>>);
+#[derive(Eq, PartialEq)]
+pub struct Tile(pub Rc<RefCell<Cell>>);
 
-impl Tile {
-    pub fn new(cell: &Rc<RefCell<Cell>>) -> Tile {
-        Tile(Rc::clone(cell))
-    }
-
-    pub fn build(cell: Rc<RefCell<Cell>>) -> Tile {
-        Tile(cell)
+impl Clone for Tile {
+    fn clone(&self) -> Self {
+        Tile(Rc::clone(self))
     }
 }
 
@@ -49,7 +43,7 @@ impl Field {
             cells: (0..cells_number)
                 .map(|x| {
                     (0..cells_number)
-                        .map(|y| Tile::build(Rc::new(RefCell::new(Cell::new(x, y)))))
+                        .map(|y| Tile(Rc::new(RefCell::new(Cell::new(x, y)))))
                         .collect()
                 })
                 .collect::<Vec<Vec<Tile>>>(),
@@ -57,7 +51,7 @@ impl Field {
     }
     pub fn get_cell(&self, x: u16, y: u16) -> Tile {
         let tile_ref = &self.cells[x as usize][y as usize];
-        Tile(Rc::clone(tile_ref))
+        tile_ref.clone()
     }
 
     //Check position by bounds

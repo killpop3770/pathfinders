@@ -28,8 +28,8 @@ pub fn pathfinder_a_star(start: Tile, end: Tile, field: &mut Field) -> Option<Ve
                 let mut path: Vec<Tile> = Vec::new();
 
                 while let Some(parent) = ancestral_cells.get(&cell) {
-                    path.push(Tile::new(&cell));
-                    cell = Tile::new(&parent);
+                    path.push(cell.clone());
+                    cell = parent.clone();
                 }
                 path.push(start);
                 path.reverse();
@@ -45,9 +45,9 @@ pub fn pathfinder_a_star(start: Tile, end: Tile, field: &mut Field) -> Option<Ve
                 }
 
                 neighbor_cell.borrow_mut().state = CellState::Visited;
-                reachable_cells.push(Tile::new(&neighbor_cell));
-                visited_cells.push(Tile::new(&neighbor_cell));
-                ancestral_cells.insert(Tile::new(&neighbor_cell), Tile::new(&current_cell));
+                reachable_cells.push(neighbor_cell.clone());
+                visited_cells.push(neighbor_cell.clone());
+                ancestral_cells.insert(neighbor_cell.clone(), current_cell.clone());
             }
         }
     }
@@ -63,6 +63,6 @@ fn choose_cell(reachable_cells: &Vec<Tile>) -> Option<Tile> {
     let rand = rand::random::<u16>() as usize;
     match reachable_cells.get(rand) {
         None => None,
-        Some(tile) => Some(Tile::new(&tile)),
+        Some(tile) => Some(tile.clone()),
     }
 }

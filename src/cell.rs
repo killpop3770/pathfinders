@@ -52,7 +52,7 @@ impl Cell {
             let current_cell_ref = field.get_cell(x as u16, y as u16);
             let mut cell = current_cell_ref.borrow_mut();
             cell.state = CellState::Visited;
-            Tile::new(&current_cell_ref)
+            current_cell_ref.clone()
         }
 
         println!("Neghbors: {}", neighbors.len());
