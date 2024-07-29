@@ -1,32 +1,29 @@
-use std::ops::Deref;
-use std::rc::Rc;
-
 use crate::field::{Field, Tile};
 
 #[derive(PartialEq, Debug, Hash, Eq)]
 pub struct Cell {
-    pub cell_state: CellState,
-    pub cell_coordinates: CellCoordinates,
+    pub state: CellState,
+    pub coordinates: CellCoordinates,
 }
 
 impl Cell {
     pub fn new(x: u16, y: u16) -> Cell {
         Cell {
-            cell_state: CellState::Empty,
-            cell_coordinates: CellCoordinates { x, y },
+            state: CellState::Empty,
+            coordinates: CellCoordinates { x, y },
         }
     }
 
     // 4/8-neighbors search algorithm
     pub fn check_neighbors(&self, field: &mut Field) -> Vec<Tile> {
-        let main_x = self.cell_coordinates.x as i16;
-        let main_y = self.cell_coordinates.y as i16;
+        let main_x = self.coordinates.x as i16;
+        let main_y = self.coordinates.y as i16;
 
         let mut neighbors: Vec<Tile> = Vec::new();
 
         for side in 0..4 {
+            //nest cell
             for step in 0..1 {
-                //nest cell
                 if side == 0 {
                     let (x, y) = (main_x + 1, main_y - step);
                     if field.is_valid_coordinate(x, y) && field.is_valid_to_path(x, y) {
@@ -52,10 +49,10 @@ impl Cell {
         }
 
         fn make_cell_visited(x: i16, y: i16, field: &mut Field) -> Tile {
-            let mut current_cell_ref = field.get_cell(x as u16, y as u16);
+            let current_cell_ref = field.get_cell(x as u16, y as u16);
             let mut cell = current_cell_ref.borrow_mut();
-            cell.cell_state = CellState::Visited;
-            Tile::new(Rc::clone(current_cell_ref.deref()))
+            cell.state = CellState::Visited;
+            Tile::new(&current_cell_ref)
         }
 
         println!("Neghbors: {}", neighbors.len());

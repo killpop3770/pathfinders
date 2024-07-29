@@ -1,5 +1,5 @@
-use std::ops::Deref;
 use piston_window::{clear, rectangle, Context, G2d, MouseButton};
+use std::ops::Deref;
 
 use crate::cell::{CellCoordinates, CellState};
 use crate::field::{
@@ -40,7 +40,7 @@ impl App {
             for y in 0..self.settings.cells_number {
                 let cell = self.field.get_cell(x, y);
 
-                let color: [f32; 4] = match cell.borrow_mut().cell_state {
+                let color: [f32; 4] = match cell.borrow_mut().state {
                     CellState::Blocked => BLOCKED_CELL_COLOR,
                     CellState::Visited => VISITED_CELL_COLOR,
                     CellState::Chosen => CHOSEN_CELL_COLOR,
@@ -90,8 +90,8 @@ impl App {
         }
 
         if let Some(ref coordinates) = self.selected_cell {
-            let mut cell = self.field.get_cell(coordinates.x, coordinates.y);
-            cell.borrow_mut().cell_state = CellState::Chosen;
+            let cell = self.field.get_cell(coordinates.x, coordinates.y);
+            cell.borrow_mut().state = CellState::Chosen;
             rectangle(
                 CHOSEN_CELL_COLOR,
                 [
@@ -120,7 +120,7 @@ impl App {
                 cells
                     .iter()
                     .map(|tile| {
-                        tile.deref().borrow_mut().cell_state = CellState::Chosen;
+                        tile.deref().borrow_mut().state = CellState::Chosen;
                     })
                     .count();
             }

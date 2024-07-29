@@ -3,7 +3,6 @@ use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use std::rc::Rc;
 
-use rand::distributions::uniform::SampleBorrow;
 use rand::Rng;
 
 use crate::cell::{Cell, CellState};
@@ -18,7 +17,11 @@ pub const VISITED_CELL_COLOR: [f32; 4] = [1.0, 0.0, 0.0, 0.5];
 pub struct Tile(Rc<RefCell<Cell>>);
 
 impl Tile {
-    pub fn new(cell: Rc<RefCell<Cell>>) -> Tile {
+    pub fn new(cell: &Rc<RefCell<Cell>>) -> Tile {
+        Tile(Rc::clone(cell))
+    }
+
+    pub fn build(cell: Rc<RefCell<Cell>>) -> Tile {
         Tile(cell)
     }
 }
@@ -46,16 +49,14 @@ impl Field {
             cells: (0..cells_number)
                 .map(|x| {
                     (0..cells_number)
-                        .map(|y| Tile {
-                            0: Rc::new(RefCell::new(Cell::new(x, y))),
-                        })
+                        .map(|y| Tile::build(Rc::new(RefCell::new(Cell::new(x, y)))))
                         .collect()
                 })
                 .collect::<Vec<Vec<Tile>>>(),
         }
     }
     pub fn get_cell(&self, x: u16, y: u16) -> Tile {
-        let tile_ref = self.cells[x as usize][y as usize].deref();
+        let tile_ref = &self.cells[x as usize][y as usize];
         Tile(Rc::clone(tile_ref))
     }
 
@@ -69,7 +70,7 @@ impl Field {
     pub fn is_valid_to_path(&self, target_x: i16, target_y: i16) -> bool {
         self.get_cell(target_x as u16, target_y as u16)
             .borrow_mut()
-            .cell_state
+            .state
             == CellState::Empty
     }
 
@@ -79,7 +80,7 @@ impl Field {
         for _ in 0..100 {
             let pos_x = rng.gen_range(0..self.cells.len() as u16);
             let pos_y = rng.gen_range(0..self.cells.len() as u16);
-            self.get_cell(pos_x, pos_y).borrow_mut().cell_state = CellState::Blocked;
+            self.get_cell(pos_x, pos_y).borrow_mut().state = CellState::Blocked;
         }
     }
 }
