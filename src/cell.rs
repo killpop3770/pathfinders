@@ -1,4 +1,42 @@
-use crate::field::{Field, Tile};
+use std::hash::{Hash, Hasher};
+use std::ops::Deref;
+use std::sync::{Arc, Mutex};
+
+#[derive(Debug)]
+pub struct Tile(pub Arc<Mutex<Cell>>);
+
+impl Eq for Tile {}
+
+//TODO:
+impl PartialEq for Tile {
+    fn eq(&self, other: &Self) -> bool {
+        let a = self.lock().unwrap().coordinates.x;
+        let b = other.lock().unwrap().coordinates.x;
+        let c = self.lock().unwrap().coordinates.y;
+        let d = other.lock().unwrap().coordinates.y;
+        a == b && c == d
+    }
+}
+
+impl Deref for Tile {
+    type Target = Arc<Mutex<Cell>>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Clone for Tile {
+    fn clone(&self) -> Self {
+        Tile(Arc::clone(self))
+    }
+}
+
+impl Hash for Tile {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.lock().unwrap().state.hash(state);
+        self.lock().unwrap().coordinates.hash(state);
+    }
+}
 
 #[derive(PartialEq, Debug, Hash, Eq)]
 pub struct Cell {
@@ -13,65 +51,6 @@ impl Cell {
             coordinates: CellCoordinates { x, y },
         }
     }
-
-    // 4/8-neighbors search algorithm
-    pub fn check_neighbors(&self, field: &mut Field) -> Vec<Tile> {
-        let main_x = self.coordinates.x as i16;
-        let main_y = self.coordinates.y as i16;
-
-        let mut neighbors: Vec<Tile> = Vec::new();
-
-        for side in 0..4 {
-            //nest cell
-            for step in 0..1 {
-                if side == 0 {
-                    let (x, y) = (main_x + 1, main_y - step);
-                    if field.is_valid_coordinate(x, y) && field.is_valid_to_path(x, y) {
-                        neighbors.push(make_cell_visited(x, y, field));
-                    }
-                } else if side == 1 {
-                    let (x, y) = (main_x - step, main_y - 1);
-                    if field.is_valid_coordinate(x, y) && field.is_valid_to_path(x, y) {
-                        neighbors.push(make_cell_visited(x, y, field));
-                    }
-                } else if side == 2 {
-                    let (x, y) = (main_x - 1, main_y + step);
-                    if field.is_valid_coordinate(x, y) && field.is_valid_to_path(x, y) {
-                        neighbors.push(make_cell_visited(x, y, field));
-                    }
-                } else if side == 3 {
-                    let (x, y) = (main_x + step, main_y + 1);
-                    if field.is_valid_coordinate(x, y) && field.is_valid_to_path(x, y) {
-                        neighbors.push(make_cell_visited(x, y, field));
-                    }
-                }
-            }
-        }
-
-        fn make_cell_visited(x: i16, y: i16, field: &mut Field) -> Tile {
-            let current_cell_ref = field.get_cell(x as u16, y as u16);
-            let mut cell = current_cell_ref.borrow_mut();
-            cell.state = CellState::Visited;
-            current_cell_ref.clone()
-        }
-
-        println!("Neghbors: {}", neighbors.len());
-
-        return neighbors;
-
-        // It's ok at 3:2
-        // It's ok at 3:1
-        // It's ok at 2:1
-        // It's ok at 1:1
-        // It's ok at 1:2
-        // It's ok at 1:3
-        // It's ok at 2:3
-        // It's ok at 3:3
-
-        //  1;1   2;1    3;1
-        //  1;2   2;2    3;2
-        //  1;3   2;3    3;3
-    }
 }
 
 #[derive(PartialEq, Debug, Eq, Hash)]
@@ -80,6 +59,7 @@ pub enum CellState {
     Visited, //visited cells -> Red 0.5 alpha
     Chosen,  //chosen path -> Green 0.5 alpha
     Empty,   //empty cells -> Gray
+    TEST,
 }
 
 #[derive(PartialEq, Debug, Hash, Eq)]
