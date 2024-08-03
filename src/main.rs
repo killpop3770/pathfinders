@@ -3,15 +3,16 @@ use piston_window::{
 };
 
 use crate::app::App;
-use crate::pathfinder::PathfinderAStar;
+use algorithms::proto;
+use crate::algorithms::proto::Proto;
 use crate::settings::Settings;
 
 mod app;
 mod cell;
 mod field;
-mod pathfinder;
 mod settings;
 mod state;
+mod algorithms;
 
 fn main() {
     let settings = Settings::new(20, 30);
@@ -25,7 +26,7 @@ fn main() {
         .build()
         .unwrap();
 
-    let algorithm = Box::new(PathfinderAStar);
+    let algorithm = Box::new(Proto);
     let mut app = App::new(settings, algorithm);
 
     while let Some(event) = window.next() {

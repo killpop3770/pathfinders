@@ -1,16 +1,14 @@
 use std::collections::{HashMap, VecDeque};
 use std::time::Duration;
+use crate::algorithms::Algorithm;
 
 use crate::cell::{CellState, Tile};
 use crate::state::SharedState;
 
-pub trait Algorithm {
-    fn search(&self, state: SharedState);
-}
 
-pub struct PathfinderAStar;
+pub struct Proto;
 
-impl Algorithm for PathfinderAStar {
+impl Algorithm for Proto {
     fn search(&self, state: SharedState) {
         let mut reachable_cells: VecDeque<Tile> = VecDeque::new();
         let mut ancestral_cells: HashMap<Tile, Tile> = HashMap::new();
