@@ -3,8 +3,11 @@ use std::thread;
 use std::thread::JoinHandle;
 
 use crate::cell::{CellCoordinates, CellState};
-use crate::field::{Field, BLOCKED_CELL_COLOR, CHOSEN_CELL_COLOR, EMPTY_CELL_COLOR, EMPTY_FIELD_COLOR, END_CELL_COLOR, VISITED_CELL_COLOR, START_CELL_COLOR};
-use crate::pathfinder::{Algorithm};
+use crate::field::{
+    Field, BLOCKED_CELL_COLOR, CHOSEN_CELL_COLOR, EMPTY_CELL_COLOR, EMPTY_FIELD_COLOR,
+    END_CELL_COLOR, START_CELL_COLOR, VISITED_CELL_COLOR,
+};
+use crate::pathfinder::Algorithm;
 use crate::settings::{Settings, Vec2f};
 use crate::state::{SharedState, State};
 

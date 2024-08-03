@@ -28,10 +28,7 @@ pub struct State {
 
 impl State {
     pub fn new(field: Field, speed: f64) -> State {
-        State {
-            field,
-            speed,
-        }
+        State { field, speed }
     }
 
     pub fn field(&mut self) -> &mut Field {

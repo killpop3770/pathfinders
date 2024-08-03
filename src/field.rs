@@ -41,10 +41,12 @@ impl Field {
 
     //Valid cell to path is cell with Empty type
     pub fn is_valid_to_path(&self, target_x: i16, target_y: i16) -> bool {
-        return match self.get_cell(target_x as u16, target_y as u16)
+        return match self
+            .get_cell(target_x as u16, target_y as u16)
             .lock()
             .unwrap()
-            .get_state() {
+            .get_state()
+        {
             CellState::Empty | CellState::Start | CellState::End => true,
             _ => false,
         };
@@ -56,7 +58,9 @@ impl Field {
         for _ in 0..(self.cells.len().pow(2) as f64 * 0.25).abs() as usize {
             let pos_x = rng.gen_range(0..self.cells.len() as u16);
             let pos_y = rng.gen_range(0..self.cells.len() as u16);
-            self.get_cell(pos_x, pos_y).get().set_state(CellState::Blocked);
+            self.get_cell(pos_x, pos_y)
+                .get()
+                .set_state(CellState::Blocked);
         }
     }
 

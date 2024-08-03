@@ -16,7 +16,10 @@ impl Settings {
                 raw_x: (cell_size * cells_number) as f64,
                 raw_y: (cell_size * cells_number) as f64,
             },
-            cell_size: Vec2f { raw_x: cell_size as f64, raw_y: cell_size as f64 },
+            cell_size: Vec2f {
+                raw_x: cell_size as f64,
+                raw_y: cell_size as f64,
+            },
             cells_number,
         }
     }

@@ -3,7 +3,7 @@ use piston_window::{
 };
 
 use crate::app::App;
-use crate::pathfinder::{PathfinderAStar};
+use crate::pathfinder::PathfinderAStar;
 use crate::settings::Settings;
 
 mod app;
@@ -20,9 +20,9 @@ fn main() {
         "Pathfinder A* test",
         [settings.window_size.raw_x, settings.window_size.raw_y],
     )
-        .resizable(false)
-        .build()
-        .unwrap();
+    .resizable(false)
+    .build()
+    .unwrap();
 
     let algorithm = Box::new(PathfinderAStar);
     let mut app = App::new(settings, algorithm);
