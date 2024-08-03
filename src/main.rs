@@ -3,8 +3,8 @@ use piston_window::{
 };
 
 use crate::app::App;
-use crate::pathfinder::PathfinderAStar;
-use crate::settings::{Settings, Vec2f};
+use crate::pathfinder::{PathfinderAStar};
+use crate::settings::Settings;
 
 mod app;
 mod cell;
@@ -14,32 +14,22 @@ mod settings;
 mod state;
 
 fn main() {
-    let settings = Settings::new(
-        Vec2f {
-            raw_x: 600.0,
-            raw_y: 600.0,
-        },
-        Vec2f {
-            raw_x: 20.0,
-            raw_y: 20.0,
-        },
-        30,
-    );
+    let settings = Settings::new(20, 30);
 
     let mut window: PistonWindow = WindowSettings::new(
         "Pathfinder A* test",
         [settings.window_size.raw_x, settings.window_size.raw_y],
     )
-    .resizable(false)
-    .build()
-    .unwrap();
+        .resizable(false)
+        .build()
+        .unwrap();
 
-    let algorithm = PathfinderAStar;
+    let algorithm = Box::new(PathfinderAStar);
     let mut app = App::new(settings, algorithm);
 
     while let Some(event) = window.next() {
         window.draw_2d(&event, |context, graphical_buffer, _| {
-            app.render_field(context, graphical_buffer);
+            app.render(context, graphical_buffer);
             // println!("render");
         });
 

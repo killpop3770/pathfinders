@@ -10,10 +10,13 @@ pub struct Settings {
 }
 
 impl Settings {
-    pub fn new(window_size: Vec2f, cell_size: Vec2f, cells_number: u16) -> Settings {
+    pub fn new(cell_size: u16, cells_number: u16) -> Settings {
         Settings {
-            window_size,
-            cell_size,
+            window_size: Vec2f {
+                raw_x: (cell_size * cells_number) as f64,
+                raw_y: (cell_size * cells_number) as f64,
+            },
+            cell_size: Vec2f { raw_x: cell_size as f64, raw_y: cell_size as f64 },
             cells_number,
         }
     }

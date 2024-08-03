@@ -1,5 +1,3 @@
-use std::hash::Hash;
-use std::ops::Mul;
 use std::sync::{Arc, Mutex};
 
 use rand::Rng;
@@ -12,8 +10,8 @@ pub const CHOSEN_CELL_COLOR: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
 pub const BLOCKED_CELL_COLOR: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
 pub const VISITED_CELL_COLOR: [f32; 4] = [1.0, 0.0, 0.0, 0.5];
 
-//TODO:
-pub const TEST_CELL_COLOR: [f32; 4] = [0.0, 0.0, 1.0, 1.0];
+pub const END_CELL_COLOR: [f32; 4] = [0.0, 0.0, 1.0, 1.0];
+pub const START_CELL_COLOR: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
 
 pub struct Field {
     pub cells: Vec<Vec<Tile>>,
@@ -43,17 +41,13 @@ impl Field {
 
     //Valid cell to path is cell with Empty type
     pub fn is_valid_to_path(&self, target_x: i16, target_y: i16) -> bool {
-        self.get_cell(target_x as u16, target_y as u16)
+        return match self.get_cell(target_x as u16, target_y as u16)
             .lock()
             .unwrap()
-            .state
-            == CellState::Empty
-            || self
-                .get_cell(target_x as u16, target_y as u16)
-                .lock()
-                .unwrap()
-                .state
-                == CellState::TEST
+            .get_state() {
+            CellState::Empty | CellState::Start | CellState::End => true,
+            _ => false,
+        };
     }
 
     //Create blocks on a field
@@ -62,14 +56,14 @@ impl Field {
         for _ in 0..(self.cells.len().pow(2) as f64 * 0.25).abs() as usize {
             let pos_x = rng.gen_range(0..self.cells.len() as u16);
             let pos_y = rng.gen_range(0..self.cells.len() as u16);
-            self.get_cell(pos_x, pos_y).lock().unwrap().state = CellState::Blocked;
+            self.get_cell(pos_x, pos_y).get().set_state(CellState::Blocked);
         }
     }
 
     // 4/8-neighbors search algorithm
     pub fn check_cell_neighbors(&mut self, cell: Tile) -> Vec<Tile> {
-        let main_x = cell.lock().unwrap().coordinates.x as i16;
-        let main_y = cell.lock().unwrap().coordinates.y as i16;
+        let main_x = cell.get().coordinates.x as i16;
+        let main_y = cell.get().coordinates.y as i16;
         let mut neighbors: Vec<Tile> = Vec::new();
 
         //nest cell
@@ -82,14 +76,12 @@ impl Field {
                     3 => (main_x + step, main_y + 1),
                     _ => (0, 0),
                 };
-                // println!("side: {side}, step: {step}, x: {x}, y: {y}");
                 if self.is_valid_coordinate(x, y) && self.is_valid_to_path(x, y) {
                     neighbors.push(self.make_cell_visited(x, y));
                 }
             }
         }
 
-        // println!("Neighbors: {}", neighbors.len());
         return neighbors;
 
         // It's ok at 3:2
@@ -108,7 +100,7 @@ impl Field {
 
     fn make_cell_visited(&self, x: i16, y: i16) -> Tile {
         let current_cell_ref = self.get_cell(x as u16, y as u16);
-        current_cell_ref.lock().unwrap().state = CellState::Visited;
+        current_cell_ref.get().set_state(CellState::Visited);
         current_cell_ref
     }
 }
