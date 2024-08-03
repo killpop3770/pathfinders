@@ -26,34 +26,31 @@ impl Algorithm for Proto {
 
         reachable_cells.push_front(start_cell.clone());
 
-        while !reachable_cells.is_empty() {
+        while let Some(current_cell) = reachable_cells.pop_front() {
             std::thread::sleep(Duration::from_millis(1));
+            current_cell.get().set_state(CellState::Visited);
 
-            if let Some(current_cell) = reachable_cells.pop_front() {
-                current_cell.get().set_state(CellState::Visited);
+            if current_cell == end_cell {
+                let mut cell = end_cell.clone();
+                let mut path: Vec<Tile> = Vec::new();
 
-                if current_cell == end_cell {
-                    let mut cell = end_cell.clone();
-                    let mut path: Vec<Tile> = Vec::new();
-
-                    while let Some(parent) = ancestral_cells.get(&cell) {
-                        path.push(cell.clone());
-                        cell = parent.clone();
-                    }
-                    path.push(start_cell.clone());
-                    path.reverse();
-                    colorize_path(path);
-                    break;
+                while let Some(parent) = ancestral_cells.get(&cell) {
+                    path.push(cell.clone());
+                    cell = parent.clone();
                 }
+                path.push(start_cell.clone());
+                path.reverse();
+                colorize_path(path);
+                break;
+            }
 
-                let neighbors = state
-                    .get()
-                    .field()
-                    .check_cell_neighbors(current_cell.clone());
-                for neighbor_cell in neighbors {
-                    reachable_cells.push_back(neighbor_cell.clone());
-                    ancestral_cells.insert(neighbor_cell.clone(), current_cell.clone());
-                }
+            let neighbors = state
+                .get()
+                .field()
+                .check_cell_neighbors(current_cell.clone());
+            for neighbor_cell in neighbors {
+                reachable_cells.push_back(neighbor_cell.clone());
+                ancestral_cells.insert(neighbor_cell.clone(), current_cell.clone());
             }
         }
     }
