@@ -20,9 +20,10 @@ fn main() {
         "Pathfinder A* test",
         [settings.window_size.raw_x, settings.window_size.raw_y],
     )
-    .resizable(false)
-    .build()
-    .unwrap();
+        .resizable(false)
+        .vsync(true)
+        .build()
+        .unwrap();
 
     let algorithm = Box::new(PathfinderAStar);
     let mut app = App::new(settings, algorithm);
