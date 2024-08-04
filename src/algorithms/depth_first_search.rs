@@ -1,16 +1,15 @@
-use std::collections::{HashMap, VecDeque};
-use std::time::Duration;
 use crate::algorithms::Algorithm;
-
 use crate::cell::{CellState, Tile};
 use crate::state::SharedState;
+use std::collections::{HashMap, VecDeque};
+use std::time::Duration;
 
+pub struct DFS;
 
-pub struct Proto;
-
-impl Algorithm for Proto {
+impl Algorithm for DFS {
     fn search(&self, state: SharedState) {
         let mut reachable_cells: VecDeque<Tile> = VecDeque::new();
+        let mut visited_cells: Vec<Tile> = Vec::new();
         let mut ancestral_cells: HashMap<Tile, Tile> = HashMap::new();
 
         let start_cell = state.get().field().get_cell(0, 0).clone();
@@ -25,6 +24,7 @@ impl Algorithm for Proto {
         end_cell.get().set_state(CellState::End);
 
         reachable_cells.push_front(start_cell.clone());
+        visited_cells.push(start_cell.clone());
 
         while let Some(current_cell) = reachable_cells.pop_front() {
             std::thread::sleep(Duration::from_millis(1));
@@ -44,20 +44,25 @@ impl Algorithm for Proto {
                 break;
             }
 
-            let neighbors = state
+            let neighbor_cells = state
                 .get()
                 .field()
                 .check_cell_neighbors(current_cell.clone());
-            for neighbor_cell in neighbors {
-                reachable_cells.push_back(neighbor_cell.clone());
+            for neighbor_cell in neighbor_cells {
+                if visited_cells.contains(&neighbor_cell) {
+                    continue;
+                }
+
+                reachable_cells.push_front(neighbor_cell.clone());
+                visited_cells.push(neighbor_cell.clone());
                 ancestral_cells.insert(neighbor_cell.clone(), current_cell.clone());
             }
         }
     }
 }
 
-fn colorize_path(arr: Vec<Tile>) {
-    arr.iter()
-        .map(|x| x.get().set_state(CellState::Chosen))
+fn colorize_path(path: Vec<Tile>) {
+    path.iter()
+        .map(|tile| tile.get().set_state(CellState::Chosen))
         .count();
 }

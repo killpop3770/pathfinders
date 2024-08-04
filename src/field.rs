@@ -9,7 +9,6 @@ pub const EMPTY_CELL_COLOR: [f32; 4] = [0.95, 0.95, 0.95, 1.0];
 pub const CHOSEN_CELL_COLOR: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
 pub const BLOCKED_CELL_COLOR: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
 pub const VISITED_CELL_COLOR: [f32; 4] = [1.0, 0.0, 0.0, 0.5];
-
 pub const END_CELL_COLOR: [f32; 4] = [0.0, 0.0, 1.0, 1.0];
 pub const START_CELL_COLOR: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
 
@@ -34,21 +33,21 @@ impl Field {
     }
 
     //Check position by bounds
-    pub fn is_valid_coordinate(&self, target_x: i16, target_y: i16) -> bool {
+    fn is_valid_coordinates(&self, target_x: i16, target_y: i16) -> bool {
         let acceptable = 0..self.cells.len();
         acceptable.contains(&(target_x as usize)) && acceptable.contains(&(target_y as usize))
     }
 
     //Valid cell to path is cell with Empty type
-    pub fn is_valid_to_path(&self, target_x: i16, target_y: i16) -> bool {
+    fn is_valid_to_path(&self, target_x: i16, target_y: i16) -> bool {
         return match self
             .get_cell(target_x as u16, target_y as u16)
             .lock()
             .unwrap()
             .get_state()
         {
-            CellState::Empty | CellState::Start | CellState::End => true,
-            _ => false,
+            CellState::Blocked => false,
+            _ => true,
         };
     }
 
@@ -80,7 +79,7 @@ impl Field {
                     3 => (main_x + step, main_y + 1),
                     _ => (0, 0),
                 };
-                if self.is_valid_coordinate(x, y) && self.is_valid_to_path(x, y) {
+                if self.is_valid_coordinates(x, y) && self.is_valid_to_path(x, y) {
                     neighbors.push(self.make_cell_visited(x, y));
                 }
             }
