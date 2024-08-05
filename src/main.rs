@@ -37,7 +37,9 @@ fn main() {
     let mut app = App::new(settings, algorithm);
 
     //TODO: create menu
-    //TODO: bind keys(space, etc..)/mouse
+    //TODO: bind keys(space, etc..) and mouse
+    //TODO: create README.md
+
     //TODO: handle error from threads
     //TODO: is i16/u16 enough?
     //TODO: make gradient for cell cost?

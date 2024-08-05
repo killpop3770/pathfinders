@@ -13,15 +13,16 @@ impl Tile {
 
 impl Eq for Tile {}
 
-//TODO:
 impl PartialEq for Tile {
     fn eq(&self, other: &Self) -> bool {
-        let x1 = self.get().coordinates.x;
-        let x2 = other.get().coordinates.x;
-        let y1 = self.get().coordinates.y;
-        let y2 = other.get().coordinates.y;
-        x1 == x2 && y1 == y2
-        // self.get().coordinates == other.get().coordinates //absence of atomicity condition?
+        // if arcs points to the same object
+        if Arc::ptr_eq(&self.deref(), &other.deref()) {
+            return true;
+        }
+
+        let x_guard = self.get();
+        let y_guard = other.get();
+        *x_guard == *y_guard
     }
 }
 
@@ -34,14 +35,15 @@ impl Deref for Tile {
 
 impl Clone for Tile {
     fn clone(&self) -> Self {
-        Tile(Arc::clone(self))
+        Tile(Arc::clone(self.deref()))
     }
 }
 
 impl Hash for Tile {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.get().state.hash(state);
-        self.get().coordinates.hash(state);
+        let cell_guard = self.get();
+        cell_guard.state.hash(state);
+        cell_guard.coordinates.hash(state);
     }
 }
 
