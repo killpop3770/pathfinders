@@ -1,10 +1,8 @@
-use crate::algorithms::greedy_best_first_search::GBFS;
-use piston_window::{
-    Button, MouseCursorEvent, PistonWindow, PressEvent, UpdateEvent, WindowSettings,
-};
+use std::path::Path;
 
-use crate::algorithms::breadth_first_search::BFS;
-use crate::algorithms::depth_first_search::DFS;
+use piston_window::{Button, MouseCursorEvent, PistonWindow, PressEvent, WindowSettings};
+
+use crate::algorithms::a_star::AStar;
 use crate::app::App;
 use crate::settings::Settings;
 
@@ -16,39 +14,44 @@ mod settings;
 mod state;
 
 fn main() {
-    let settings = Settings::new(20, 30);
+    let settings = Settings::new(30, 30);
 
     let mut window: PistonWindow = WindowSettings::new(
-        "Pathfinder A* test",
+        "Pathfinders test",
         [settings.window_size.raw_x, settings.window_size.raw_y],
     )
     .resizable(false)
     .vsync(true)
     .build()
-    .unwrap();
+    .expect("Can not create a main window!");
+
+    let mut glyphs = window
+        .load_font(Path::new("./assets/Particle-Regular.otf"))
+        .expect("Can not find fonts!");
 
     // let algorithm = Box::new(BFS);
     // let algorithm = Box::new(DFS);
-    let algorithm = Box::new(GBFS);
+    // let algorithm = Box::new(GBFS);
+    // let algorithm = Box::new(Dijkstra);
+    let algorithm = Box::new(AStar);
     let mut app = App::new(settings, algorithm);
 
     //TODO: create menu
-    //TODO: bind keys(space, etc..)
-    //TODO: complete speed factor
+    //TODO: bind keys(space, etc..)/mouse
     //TODO: handle error from threads
-    //TODO: complete bfs, dfs, dijkstra algorithms
-    //TODO: check coords type bound while casting
+    //TODO: is i16/u16 enough?
+    //TODO: make gradient for cell cost?
+    //TODO: make one/two default map/maze for all algorithms?
 
     while let Some(event) = window.next() {
-        window.draw_2d(&event, |context, graphical_buffer, _| {
-            app.render(context, graphical_buffer);
-            // println!("render");
+        window.draw_2d(&event, |context, graphical_buffer, device| {
+            app.render(context, graphical_buffer, &mut glyphs);
+            glyphs.factory.encoder.flush(device);
         });
 
-        if let Some(ref args) = event.update_args() {
-            // println!("update");
-            // app.update(args);
-        }
+        // if let Some(ref args) = event.update_args() {
+        //     app.update(args);
+        // }
 
         if let Some(button) = event.press_args() {
             match button {

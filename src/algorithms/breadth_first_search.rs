@@ -1,7 +1,6 @@
-use crate::algorithms::Algorithm;
 use std::collections::{HashMap, VecDeque};
-use std::time::Duration;
 
+use crate::algorithms::{colorize_path, Algorithm};
 use crate::cell::{CellState, Tile};
 use crate::state::SharedState;
 
@@ -28,10 +27,13 @@ impl Algorithm for BFS {
         reachable_cells.push_front(start_cell.clone());
 
         while let Some(current_cell) = reachable_cells.pop_front() {
-            std::thread::sleep(Duration::from_millis(1));
-            println!("r {}", reachable_cells.len());
-            println!("v {}", visited_cells.len());
-            println!("a {}", ancestral_cells.len());
+            state.wait(5.0);
+            println!(
+                "r {} | v {} | a {}",
+                reachable_cells.len(),
+                visited_cells.len(),
+                ancestral_cells.len()
+            );
             current_cell.get().set_state(CellState::Visited);
 
             if current_cell == end_cell {
@@ -42,9 +44,10 @@ impl Algorithm for BFS {
                     path.push(cell.clone());
                     cell = parent.clone();
                 }
+
                 path.push(start_cell.clone());
                 path.reverse();
-                println!("path {}", path.len());
+                println!("p {}", path.len());
                 colorize_path(path);
                 break;
             }
@@ -63,10 +66,4 @@ impl Algorithm for BFS {
             }
         }
     }
-}
-
-fn colorize_path(arr: Vec<Tile>) {
-    arr.iter()
-        .map(|x| x.get().set_state(CellState::Chosen))
-        .count();
 }

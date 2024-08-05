@@ -1,4 +1,5 @@
 use std::sync::{Arc, Mutex, MutexGuard};
+use std::time::Duration;
 
 use crate::field::Field;
 
@@ -14,11 +15,10 @@ impl SharedState {
         return self.0.lock().unwrap();
     }
 
-    // pub fn wait(&self) {
-    //     let a= 1000.0 / self.get().speed;
-    //     println!("A {a}");
-    //     thread::sleep(Duration::from_nanos((a) as u64));
-    // }
+    pub fn wait(&self, ms: f64) {
+        let delay = ms * 1000.0 / self.get().speed;
+        std::thread::sleep(Duration::from_micros(delay as u64));
+    }
 }
 
 pub struct State {

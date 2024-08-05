@@ -1,12 +1,13 @@
-use piston_window::{clear, rectangle, Context, G2d, MouseButton};
 use std::thread;
 use std::thread::JoinHandle;
+
+use piston_window::{clear, Context, G2d, Glyphs, MouseButton, rectangle, text, Transformed};
 
 use crate::algorithms::Algorithm;
 use crate::cell::{CellCoordinates, CellState};
 use crate::field::{
-    Field, BLOCKED_CELL_COLOR, CHOSEN_CELL_COLOR, EMPTY_CELL_COLOR, EMPTY_FIELD_COLOR,
-    END_CELL_COLOR, START_CELL_COLOR, VISITED_CELL_COLOR,
+    BLOCKED_CELL_COLOR, CHOSEN_CELL_COLOR, EMPTY_CELL_COLOR, EMPTY_FIELD_COLOR, END_CELL_COLOR,
+    Field, START_CELL_COLOR, VISITED_CELL_COLOR,
 };
 use crate::settings::{Settings, Vec2f};
 use crate::state::{SharedState, State};
@@ -23,8 +24,9 @@ impl App {
     pub fn new(settings: Settings, algorithm: Box<dyn Algorithm + Send>) -> App {
         let mut field = Field::new(settings.cells_number);
         field.make_noise();
+        field.set_prices();
 
-        let state = SharedState::new(State::new(field, 0.5));
+        let state = SharedState::new(State::new(field, 1.0));
         let state_copy = state.clone();
 
         let algorithm_thread = thread::Builder::new()
@@ -46,11 +48,11 @@ impl App {
         }
     }
 
-    pub fn start(&mut self) {}
+    // pub fn start(&mut self) {}
 
-    pub fn update(&mut self, context: Context, g2d: &mut G2d) {}
+    // pub fn update(&mut self, context: Context, g2d: &mut G2d) {}
 
-    pub fn render(&mut self, context: Context, g2d: &mut G2d) {
+    pub fn render(&mut self, context: Context, g2d: &mut G2d, glyphs: &mut Glyphs) {
         clear(EMPTY_FIELD_COLOR, g2d);
 
         for x in 0..self.settings.cells_number {
@@ -66,17 +68,35 @@ impl App {
                     CellState::Start => START_CELL_COLOR,
                 };
 
+                let cell_raw_x = (x as f64) * self.settings.cell_size.raw_x;
+                let cell_raw_y = (y as f64) * self.settings.cell_size.raw_y;
+
                 rectangle(
                     color,
                     [
-                        (x as f64) * self.settings.cell_size.raw_x,
-                        (y as f64) * self.settings.cell_size.raw_y,
+                        cell_raw_x,
+                        cell_raw_y,
                         self.settings.cell_size.raw_x,
                         self.settings.cell_size.raw_y,
                     ],
                     context.transform,
                     g2d,
                 );
+
+                let transform = context.transform.trans(
+                    cell_raw_x + self.settings.cell_offset.raw_x,
+                    cell_raw_y + self.settings.cell_offset.raw_y,
+                );
+
+                text::Text::new_color(piston_window::color::BLACK, self.settings.font_size)
+                    .draw(
+                        &*cell.get().cost.to_string(),
+                        glyphs,
+                        &context.draw_state,
+                        transform,
+                        g2d,
+                    )
+                    .unwrap();
             }
         }
 

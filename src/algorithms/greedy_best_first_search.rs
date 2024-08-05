@@ -1,8 +1,7 @@
-use std::cmp::{Ordering, Reverse};
+use std::cmp::Reverse;
 use std::collections::{BinaryHeap, HashMap};
-use std::time::Duration;
 
-use crate::algorithms::Algorithm;
+use crate::algorithms::{colorize_path, heuristic_factor, Algorithm, PriorityCell};
 use crate::cell::{CellState, Tile};
 use crate::state::SharedState;
 
@@ -33,7 +32,13 @@ impl Algorithm for GBFS {
         visited_cells.push(start_cell.clone());
 
         while let Some(current_cell) = reachable_cells.pop() {
-            std::thread::sleep(Duration::from_millis(50));
+            state.wait(5.0);
+            println!(
+                "r {} | v {} | a {}",
+                reachable_cells.len(),
+                visited_cells.len(),
+                ancestral_cells.len()
+            );
             let current_cell = current_cell.0.tile.clone();
             current_cell.get().set_state(CellState::Visited);
 
@@ -45,8 +50,10 @@ impl Algorithm for GBFS {
                     path.push(cell.clone());
                     cell = parent.clone();
                 }
+
                 path.push(start_cell.clone());
                 path.reverse();
+                println!("p {}", path.len());
                 colorize_path(path);
                 break;
             }
@@ -69,45 +76,5 @@ impl Algorithm for GBFS {
                 ancestral_cells.insert(neighbor_cell.clone(), current_cell.clone());
             }
         }
-    }
-}
-
-fn colorize_path(path: Vec<Tile>) {
-    path.iter()
-        .map(|tile| tile.get().set_state(CellState::Chosen))
-        .count();
-}
-
-fn heuristic_factor(a: Tile, b: Tile) -> i16 {
-    let ax = a.get().coordinates.x as i16;
-    let bx = b.get().coordinates.x as i16;
-    let ay = a.get().coordinates.y as i16;
-    let by = b.get().coordinates.y as i16;
-    return (ax - bx).abs() + (ay - by).abs();
-}
-
-#[derive(Debug)]
-pub struct PriorityCell {
-    pub tile: Tile,
-    pub cost: i16,
-}
-
-impl Eq for PriorityCell {}
-
-impl PartialEq<Self> for PriorityCell {
-    fn eq(&self, other: &Self) -> bool {
-        self.tile == other.tile
-    }
-}
-
-impl PartialOrd<Self> for PriorityCell {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.cost.partial_cmp(&other.cost)
-    }
-}
-
-impl Ord for PriorityCell {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.cost.cmp(&other.cost)
     }
 }

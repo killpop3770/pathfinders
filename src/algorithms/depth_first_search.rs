@@ -1,8 +1,8 @@
-use crate::algorithms::Algorithm;
+use std::collections::{HashMap, VecDeque};
+
+use crate::algorithms::{colorize_path, Algorithm};
 use crate::cell::{CellState, Tile};
 use crate::state::SharedState;
-use std::collections::{HashMap, VecDeque};
-use std::time::Duration;
 
 pub struct DFS;
 
@@ -27,7 +27,13 @@ impl Algorithm for DFS {
         visited_cells.push(start_cell.clone());
 
         while let Some(current_cell) = reachable_cells.pop_front() {
-            std::thread::sleep(Duration::from_millis(1));
+            state.wait(5.0);
+            println!(
+                "r {} | v {} | a {}",
+                reachable_cells.len(),
+                visited_cells.len(),
+                ancestral_cells.len()
+            );
             current_cell.get().set_state(CellState::Visited);
 
             if current_cell == end_cell {
@@ -40,6 +46,7 @@ impl Algorithm for DFS {
                 }
                 path.push(start_cell.clone());
                 path.reverse();
+                println!("p {}", path.len());
                 colorize_path(path);
                 break;
             }
@@ -59,10 +66,4 @@ impl Algorithm for DFS {
             }
         }
     }
-}
-
-fn colorize_path(path: Vec<Tile>) {
-    path.iter()
-        .map(|tile| tile.get().set_state(CellState::Chosen))
-        .count();
 }

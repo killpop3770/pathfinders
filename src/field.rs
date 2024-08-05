@@ -63,6 +63,18 @@ impl Field {
         }
     }
 
+    pub fn set_prices(&mut self) {
+        let mut rng = rand::thread_rng();
+        for x in 0..self.cells.len() - 1 {
+            for y in 0..self.cells.len() - 1 {
+                let tile = self.get_cell(x as u16, y as u16);
+                if *tile.get().get_state() != CellState::Blocked {
+                    tile.get().cost = rng.gen_range(0..20);
+                }
+            }
+        }
+    }
+
     // 4/8-neighbors search algorithm
     pub fn check_cell_neighbors(&mut self, cell: Tile) -> Vec<Tile> {
         let main_x = cell.get().coordinates.x as i16;

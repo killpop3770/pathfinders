@@ -48,6 +48,7 @@ impl Hash for Tile {
 #[derive(Debug, Hash, Eq)]
 pub struct Cell {
     state: CellState,
+    pub cost: i16,
     pub coordinates: CellCoordinates,
     pub name: String,
 }
@@ -56,6 +57,7 @@ impl Cell {
     pub fn new(x: u16, y: u16) -> Cell {
         Cell {
             state: CellState::Empty,
+            cost: 10,
             coordinates: CellCoordinates { x, y },
             name: format!("CELL_{}_{}", x, y),
         }
@@ -77,7 +79,7 @@ impl PartialEq for Cell {
 }
 
 //TODO: another way to colorize start/end cells
-#[derive(PartialEq, Debug, Eq, Hash)]
+#[derive(Debug, Eq, Hash, PartialEq)]
 pub enum CellState {
     Blocked, //obstacles -> Black?
     Visited, //visited cells -> Red 0.5 alpha
