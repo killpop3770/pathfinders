@@ -32,12 +32,11 @@ impl Algorithm for Dijkstra {
         }));
         visited_cells.push(start_cell.clone());
 
-        //TODO: problem with get() == .lock().unwrap()
-        let c = start_cell.get().cost;
-        cost_so_far.insert(start_cell.clone(), c);
+        let start_cell_cost = start_cell.get().cost;
+        cost_so_far.insert(start_cell.clone(), start_cell_cost);
 
         while let Some(current_cell) = reachable_cells.pop() {
-            state.wait(5.0);
+            state.wait(20.0);
             println!(
                 "r {} | v {} | a {}",
                 reachable_cells.len(),
@@ -71,10 +70,9 @@ impl Algorithm for Dijkstra {
                     continue;
                 }
 
-                let cur_cost = current_cell.get().cost;
-                let nei_cost = neighbor_cell.get().cost;
-                let new_cost = cur_cost + nei_cost;
-                // println!("{new_cost}");
+                let current_cell_cost = current_cell.get().cost;
+                let neighbor_cell_cost = neighbor_cell.get().cost;
+                let new_cost = current_cell_cost + neighbor_cell_cost;
                 if cost_so_far.get(&neighbor_cell.clone()).is_none()
                     || new_cost < *cost_so_far.get(&neighbor_cell.clone()).unwrap()
                 {
