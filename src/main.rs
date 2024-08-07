@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use piston_window::{Button, MouseCursorEvent, PistonWindow, PressEvent, WindowSettings};
+use piston_window::{Button, Key, MouseCursorEvent, PistonWindow, PressEvent, WindowSettings};
 
 use crate::algorithms::AlgorithmType;
 use crate::menu::{AppMenu, UnitAppMenu};
@@ -43,7 +43,6 @@ fn main() {
         ],
     );
 
-
     while let Some(event) = window.next() {
         window.draw_2d(&event, |context, graphical_buffer, device| {
             app_menu.render(context, graphical_buffer, &mut glyphs);
@@ -56,7 +55,18 @@ fn main() {
 
         if let Some(button) = event.press_args() {
             match button {
-                Button::Keyboard(_) => {}
+                Button::Keyboard(key) => {
+                    match key {
+                        Key::Escape => app_menu.back_to_menu(),
+                        //TODO: add keys
+                        Key::D1 => println!(" "),
+                        Key::D2 => println!(" "),
+                        Key::D3 => println!(" "),
+                        Key::D4 => println!(" "),
+                        Key::D5 => println!(" "),
+                        _ => {}
+                    }
+                }
                 Button::Mouse(mouse_button) => {
                     app_menu.on_mouse_click(&mouse_button);
                 }

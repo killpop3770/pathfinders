@@ -19,7 +19,7 @@ use crate::state::{SharedState, State};
 struct Alg(Arc<Mutex<dyn Algorithm + Send + Sync>>);
 
 pub struct App {
-    pathfinder_handler: Option<JoinHandle<()>>,
+    pub pathfinder_handler: Option<JoinHandle<()>>,
     algorithm: Alg,
     settings: Settings,
     state: SharedState,

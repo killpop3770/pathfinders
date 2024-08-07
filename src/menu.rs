@@ -17,7 +17,7 @@ pub struct AppMenu {
     app: Option<Arc<Mutex<App>>>,
     font_size: FontSize,
     settings: Settings,
-    items: Vec<UnitAppMenu>,
+    pub items: Vec<UnitAppMenu>,
     mouse_coordinates: Vec2f,
 }
 
@@ -67,15 +67,21 @@ impl AppMenu {
                 }
             }
             AppState::Algorithm => {
-                match &self.app {
-                    None => {}
-                    Some(a) => {
-                        let mut c = a.lock().unwrap();
-                        c.render(context, g2d, glyphs);
-                    }
+                if let Some(app_ref) = &self.app {
+                    let mut app = app_ref.lock().unwrap();
+                    app.render(context, g2d, glyphs);
                 };
             }
         }
+    }
+
+    pub fn back_to_menu(&mut self) {
+        if let Some(app_ref) = &self.app {
+            //TODO: add atomic to stop secondary thread immediately
+            let a = app_ref.lock().unwrap();
+            drop(a);
+            self.app_state = AppState::Menu;
+        };
     }
 
     pub fn on_mouse_click(&mut self, button: &MouseButton) {
@@ -119,7 +125,7 @@ impl UnitAppMenu {
         }
     }
 
-    fn run(&self, settings: Settings) -> App {
+    pub fn run(&self, settings: Settings) -> App {
         let mut app = App::new(settings.clone(), &self.algorithm_type);
         app.start();
         return app;
