@@ -36,7 +36,7 @@ impl Algorithm for AStar {
         cost_so_far.insert(start_cell.clone(), start_cell_cost);
 
         while let Some(current_cell) = reachable_cells.pop() {
-            state.wait(30.0);
+            state.wait(25.0);
             println!(
                 "r {} | v {} | a {}",
                 reachable_cells.len(),

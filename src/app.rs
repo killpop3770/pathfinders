@@ -1,19 +1,26 @@
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
 
 use piston_window::{clear, Context, G2d, Glyphs, MouseButton, rectangle, text, Transformed};
 
-use crate::algorithms::Algorithm;
+use crate::algorithms::{Algorithm, AlgorithmType};
+use crate::algorithms::a_star::AStar;
+use crate::algorithms::breadth_first_search::BFS;
+use crate::algorithms::depth_first_search::DFS;
+use crate::algorithms::dijkstra::Dijkstra;
+use crate::algorithms::greedy_best_first_search::GBFS;
 use crate::cell::{CellCoordinates, CellState};
-use crate::field::{
-    BLOCKED_CELL_COLOR, CHOSEN_CELL_COLOR, EMPTY_CELL_COLOR, EMPTY_FIELD_COLOR, END_CELL_COLOR,
-    Field, START_CELL_COLOR, VISITED_CELL_COLOR,
-};
+use crate::colors::{BLOCKED_CELL_COLOR, CHOSEN_CELL_COLOR, EMPTY_CELL_COLOR, EMPTY_FIELD_COLOR, END_CELL_COLOR, START_CELL_COLOR, VISITED_CELL_COLOR};
+use crate::field::Field;
 use crate::settings::{Settings, Vec2f};
 use crate::state::{SharedState, State};
 
+struct Alg(Arc<Mutex<dyn Algorithm + Send + Sync>>);
+
 pub struct App {
-    pathfinder_handler: JoinHandle<()>,
+    pathfinder_handler: Option<JoinHandle<()>>,
+    algorithm: Alg,
     settings: Settings,
     state: SharedState,
     mouse_coordinates: Vec2f,
@@ -21,23 +28,23 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(settings: Settings, algorithm: Box<dyn Algorithm + Send>) -> App {
+    pub fn new(settings: Settings, algorithm_type: &AlgorithmType) -> App {
         let mut field = Field::new(settings.cells_number);
         field.make_noise();
         field.set_prices();
 
         let state = SharedState::new(State::new(field, 1.0));
-        let state_copy = state.clone();
-
-        let algorithm_thread = thread::Builder::new()
-            .name("algorithm".to_string())
-            .spawn(move || {
-                algorithm.search(state_copy);
-            })
-            .unwrap();
+        let algorithm: Alg = match algorithm_type {
+            AlgorithmType::BFS => Alg(Arc::new(Mutex::new(BFS))),
+            AlgorithmType::DFS => Alg(Arc::new(Mutex::new(DFS))),
+            AlgorithmType::GBFS => Alg(Arc::new(Mutex::new(GBFS))),
+            AlgorithmType::Dijkstra => Alg(Arc::new(Mutex::new(Dijkstra))),
+            AlgorithmType::AStar => Alg(Arc::new(Mutex::new(AStar))),
+        };
 
         App {
-            pathfinder_handler: algorithm_thread,
+            pathfinder_handler: None,
+            algorithm,
             state,
             settings,
             mouse_coordinates: Vec2f {
@@ -48,9 +55,18 @@ impl App {
         }
     }
 
-    // pub fn start(&mut self) {}
-
-    // pub fn update(&mut self, context: Context, g2d: &mut G2d) {}
+    pub fn start(&mut self) {
+        let a = Arc::clone(&self.algorithm.0);
+        let s = self.state.clone();
+        let algorithm_thread = thread::Builder::new()
+            .name("algorithm".to_string())
+            .spawn(move || {
+                let b = a.lock().unwrap();
+                b.search(s);
+            })
+            .unwrap();
+        self.pathfinder_handler = Some(algorithm_thread);
+    }
 
     pub fn render(&mut self, context: Context, g2d: &mut G2d, glyphs: &mut Glyphs) {
         clear(EMPTY_FIELD_COLOR, g2d);
@@ -127,22 +143,6 @@ impl App {
                 g2d,
             );
         }
-
-        // if let Some(ref coordinates) = self.selected_cell {
-        //     let cell = self.state.get().field.get_cell(coordinates.x, coordinates.y);
-        //     cell.lock().unwrap().state = CellState::Chosen;
-        //     rectangle(
-        //         CHOSEN_CELL_COLOR,
-        //         [
-        //             (coordinates.x as f64) * self.settings.cell_size.raw_x,
-        //             (coordinates.y as f64) * self.settings.cell_size.raw_y,
-        //             self.settings.cell_size.raw_x,
-        //             self.settings.cell_size.raw_y,
-        //         ],
-        //         context.transform,
-        //         g2d,
-        //     )
-        // }
     }
 
     pub fn on_mouse_click(&mut self, button: &MouseButton) {
@@ -151,8 +151,7 @@ impl App {
             let y = (self.mouse_coordinates.raw_y / self.settings.cell_size.raw_y) as u16;
 
             println!(
-                "COLOR: {:?}",
-                self.state.get().field().get_cell(x, y).get().get_state()
+                "COLOR: {:?}", self.state.get().field().get_cell(x, y).get().get_state()
             );
         }
     }

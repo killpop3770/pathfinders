@@ -7,6 +7,15 @@ pub mod depth_first_search;
 pub mod dijkstra;
 pub mod greedy_best_first_search;
 
+#[derive(Copy, Clone)]
+pub enum AlgorithmType {
+    BFS,
+    DFS,
+    GBFS,
+    Dijkstra,
+    AStar,
+}
+
 pub trait Algorithm {
     fn search(&self, state: SharedState);
 }

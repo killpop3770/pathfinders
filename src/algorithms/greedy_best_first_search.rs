@@ -32,7 +32,7 @@ impl Algorithm for GBFS {
         visited_cells.push(start_cell.clone());
 
         while let Some(current_cell) = reachable_cells.pop() {
-            state.wait(5.0);
+            state.wait(25.0);
             println!(
                 "r {} | v {} | a {}",
                 reachable_cells.len(),

@@ -1,8 +1,11 @@
+
+#[derive(Copy, Clone)]
 pub struct Vec2f {
     pub raw_x: f64,
     pub raw_y: f64,
 }
 
+#[derive(Copy, Clone)]
 pub struct Settings {
     pub window_size: Vec2f,
     pub cell_size: Vec2f,

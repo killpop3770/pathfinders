@@ -36,7 +36,7 @@ impl Algorithm for Dijkstra {
         cost_so_far.insert(start_cell.clone(), start_cell_cost);
 
         while let Some(current_cell) = reachable_cells.pop() {
-            state.wait(20.0);
+            state.wait(25.0);
             println!(
                 "r {} | v {} | a {}",
                 reachable_cells.len(),
