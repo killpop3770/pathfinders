@@ -1,9 +1,10 @@
 use std::path::Path;
+use std::sync::{Arc, Mutex};
 
 use piston_window::{Button, Key, MouseCursorEvent, PistonWindow, PressEvent, WindowSettings};
 
 use crate::algorithms::AlgorithmType;
-use crate::menu::{AppMenu, UnitAppMenu};
+use crate::menu::{AppMenu, AppState, UnitAppMenu};
 use crate::settings::Settings;
 
 mod algorithms;
@@ -58,12 +59,26 @@ fn main() {
                 Button::Keyboard(key) => {
                     match key {
                         Key::Escape => app_menu.back_to_menu(),
-                        //TODO: add keys
-                        Key::D1 => println!(" "),
-                        Key::D2 => println!(" "),
-                        Key::D3 => println!(" "),
-                        Key::D4 => println!(" "),
-                        Key::D5 => println!(" "),
+                        Key::D1 | Key::NumPad1 => {
+                            app_menu.app_state = AppState::Algorithm;
+                            app_menu.app = Some(Arc::new(Mutex::new(app_menu.items.get(0).unwrap().run(app_menu.settings))));
+                        }
+                        Key::D2 | Key::NumPad2 => {
+                            app_menu.app_state = AppState::Algorithm;
+                            app_menu.app = Some(Arc::new(Mutex::new(app_menu.items.get(1).unwrap().run(app_menu.settings))));
+                        }
+                        Key::D3 | Key::NumPad3 => {
+                            app_menu.app_state = AppState::Algorithm;
+                            app_menu.app = Some(Arc::new(Mutex::new(app_menu.items.get(2).unwrap().run(app_menu.settings))));
+                        }
+                        Key::D4 | Key::NumPad4 => {
+                            app_menu.app_state = AppState::Algorithm;
+                            app_menu.app = Some(Arc::new(Mutex::new(app_menu.items.get(3).unwrap().run(app_menu.settings))));
+                        }
+                        Key::D5 | Key::NumPad5 => {
+                            app_menu.app_state = AppState::Algorithm;
+                            app_menu.app = Some(Arc::new(Mutex::new(app_menu.items.get(4).unwrap().run(app_menu.settings))));
+                        }
                         _ => {}
                     }
                 }

@@ -8,16 +8,16 @@ use crate::algorithms::AlgorithmType;
 use crate::app::App;
 use crate::settings::{Settings, Vec2f};
 
-enum AppState {
+pub enum AppState {
     Menu,
     Algorithm,
 }
 
 pub struct AppMenu {
-    app_state: AppState,
-    app: Option<Arc<Mutex<App>>>,
+    pub(crate) app_state: AppState,
+    pub(crate) app: Option<Arc<Mutex<App>>>,
     font_size: FontSize,
-    settings: Settings,
+    pub(crate) settings: Settings,
     pub items: Vec<UnitAppMenu>,
     mouse_coordinates: Vec2f,
 }
