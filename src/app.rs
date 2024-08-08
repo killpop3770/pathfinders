@@ -1,4 +1,5 @@
 use std::sync::{Arc, Mutex};
+use std::sync::atomic::AtomicBool;
 use std::thread;
 use std::thread::JoinHandle;
 
@@ -20,6 +21,7 @@ struct Alg(Arc<Mutex<dyn Algorithm + Send + Sync>>);
 
 pub struct App {
     pub pathfinder_handler: Option<JoinHandle<()>>,
+    pub should_stop: Arc<AtomicBool>,
     algorithm: Alg,
     settings: Settings,
     state: SharedState,
@@ -34,16 +36,21 @@ impl App {
         field.set_prices();
 
         let state = SharedState::new(State::new(field, 1.0));
+
+        let should_stop = Arc::new(AtomicBool::new(false));
+        let should_stop_ref = Arc::clone(&should_stop);
+
         let algorithm: Alg = match algorithm_type {
-            AlgorithmType::BFS => Alg(Arc::new(Mutex::new(BFS))),
-            AlgorithmType::DFS => Alg(Arc::new(Mutex::new(DFS))),
-            AlgorithmType::GBFS => Alg(Arc::new(Mutex::new(GBFS))),
-            AlgorithmType::Dijkstra => Alg(Arc::new(Mutex::new(Dijkstra))),
-            AlgorithmType::AStar => Alg(Arc::new(Mutex::new(AStar))),
+            AlgorithmType::BFS => Alg(Arc::new(Mutex::new(BFS(should_stop_ref)))),
+            AlgorithmType::DFS => Alg(Arc::new(Mutex::new(DFS(should_stop_ref)))),
+            AlgorithmType::GBFS => Alg(Arc::new(Mutex::new(GBFS(should_stop_ref)))),
+            AlgorithmType::Dijkstra => Alg(Arc::new(Mutex::new(Dijkstra(should_stop_ref)))),
+            AlgorithmType::AStar => Alg(Arc::new(Mutex::new(AStar(should_stop_ref)))),
         };
 
         App {
             pathfinder_handler: None,
+            should_stop,
             algorithm,
             state,
             settings,

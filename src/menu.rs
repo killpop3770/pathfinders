@@ -1,4 +1,5 @@
 use std::sync::{Arc, Mutex};
+use std::sync::atomic::Ordering;
 
 use piston_window::{CharacterCache, clear, Context, DrawState, G2d, Glyphs, MouseButton, rectangle, text, Transformed};
 use piston_window::types::FontSize;
@@ -77,9 +78,8 @@ impl AppMenu {
 
     pub fn back_to_menu(&mut self) {
         if let Some(app_ref) = &self.app {
-            //TODO: add atomic to stop secondary thread immediately
-            let a = app_ref.lock().unwrap();
-            drop(a);
+            let app_guard = app_ref.lock().unwrap();
+            app_guard.should_stop.store(true, Ordering::Relaxed);
             self.app_state = AppState::Menu;
         };
     }

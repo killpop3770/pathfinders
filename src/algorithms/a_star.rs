@@ -1,11 +1,13 @@
 use std::cmp::Reverse;
 use std::collections::{BinaryHeap, HashMap};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use crate::algorithms::{colorize_path, heuristic_factor, Algorithm, PriorityCell};
 use crate::cell::{CellState, Tile};
 use crate::state::SharedState;
 
-pub struct AStar;
+pub struct AStar(pub Arc<AtomicBool>);
 
 impl Algorithm for AStar {
     fn search(&self, state: SharedState) {
@@ -36,6 +38,9 @@ impl Algorithm for AStar {
         cost_so_far.insert(start_cell.clone(), start_cell_cost);
 
         while let Some(current_cell) = reachable_cells.pop() {
+            if self.0.load(Ordering::Relaxed) {
+                break;
+            }
             state.wait(25.0);
             println!(
                 "r {} | v {} | a {}",

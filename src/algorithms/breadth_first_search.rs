@@ -1,10 +1,12 @@
 use std::collections::{HashMap, VecDeque};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use crate::algorithms::{colorize_path, Algorithm};
 use crate::cell::{CellState, Tile};
 use crate::state::SharedState;
 
-pub struct BFS;
+pub struct BFS(pub Arc<AtomicBool>);
 
 impl Algorithm for BFS {
     fn search(&self, state: SharedState) {
@@ -27,6 +29,9 @@ impl Algorithm for BFS {
         reachable_cells.push_front(start_cell.clone());
 
         while let Some(current_cell) = reachable_cells.pop_front() {
+            if self.0.load(Ordering::Relaxed) {
+                break;
+            }
             state.wait(25.0);
             println!(
                 "r {} | v {} | a {}",
