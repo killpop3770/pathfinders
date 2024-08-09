@@ -10,7 +10,7 @@ The project is a simple visualization of algorithms such as:
 - Dijkstra
 - A_Star
 
-<div style="display: flex;">
+<div style="display: flex; flex-direction: row; flex-wrap: nowrap;">
 <img src="./assets/menu.png" width="50%" style="margin-right: 5px" />
 <img src="./assets/astar.png" width="50%" />
 </div>
