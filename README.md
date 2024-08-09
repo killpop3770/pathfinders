@@ -1,6 +1,5 @@
 # Pathfinders
 
----
 
 The project is a simple visualization of algorithms such as:
 
@@ -15,18 +14,15 @@ The project is a simple visualization of algorithms such as:
 <img src="./assets/astar.png" width="49%" />
 </div>
 
-
-[//]: # (![Image1]&#40;./assets/menu.png&#41; ![Image2]&#40;./assets/astar.png&#41; )
-
 ---
 
-[![Latest Version](https://img.shields.io/github/v/tag/killpop3770/pathfinder_a_star?sort=semver&label=version)](https://github.com/killpop3770/pathfinder_a_star)
+[![Latest Version](https://img.shields.io/github/v/tag/killpop3770/pathfinders?sort=semver&label=version)](https://github.com/killpop3770/pathfinders)
 
 ## Build and Run
 
 First, make sure the following are installed:
 
-1. [Rust](https://www.rust-lang.org/tools/install)
+1. [Rust](https://www.rust-lang.org/tools/install) 🦀
 
 In order to build, first clone the github repo:
 
