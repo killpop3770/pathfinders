@@ -11,8 +11,8 @@ The project is a simple visualization of algorithms such as:
 - A_Star
 
 <div style="display: flex; flex-direction: row; flex-wrap: nowrap;">
-<img src="./assets/menu.png" width="50%" style="margin-right: 5px" />
-<img src="./assets/astar.png" width="50%" />
+<img src="./assets/menu.png" width="49%" style="margin-right: 5px" />
+<img src="./assets/astar.png" width="49%" />
 </div>
 
 
