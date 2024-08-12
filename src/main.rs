@@ -1,7 +1,7 @@
-use std::path::Path;
 use std::sync::{Arc, Mutex};
 
-use piston_window::{Button, Key, MouseCursorEvent, PistonWindow, PressEvent, WindowSettings};
+use piston_window::{Button, Key, MouseCursorEvent, PistonWindow, PressEvent, TextureSettings, WindowSettings};
+use piston_window::glyph_cache::rusttype::GlyphCache;
 
 use crate::algorithms::AlgorithmType;
 use crate::menu::{AppMenu, AppState, UnitAppMenu};
@@ -28,9 +28,13 @@ fn main() {
         .build()
         .expect("Can not create a main window!");
 
-    let mut glyphs = window
-        .load_font(Path::new("./assets/Particle-Regular.otf"))
-        .expect("Can not find fonts!");
+    let mut glyphs = GlyphCache::from_bytes
+        (
+            include_bytes!("../assets/Particle-Regular.otf"),
+            window.create_texture_context(),
+            TextureSettings::new(),
+        )
+        .expect("Can not load font!");
 
     let mut app_menu = AppMenu::new(
         35,
