@@ -11,7 +11,7 @@ The project is a simple visualization of algorithms such as:
 
 <div style="display: flex; flex-direction: row; flex-wrap: nowrap;">
 <img src="./assets/menu.png" width="49%" style="margin-right: 5px" />
-<img src="./assets/astar.png" width="49%" />
+<img src="./assets/a_star.gif" width="48%" />
 </div>
 
 ---
