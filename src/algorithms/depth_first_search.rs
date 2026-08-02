@@ -1,74 +1,92 @@
 use std::collections::{HashMap, VecDeque};
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
 
-use crate::algorithms::{colorize_path, Algorithm};
-use crate::cell::{CellState, Tile};
-use crate::state::SharedState;
+use crate::algorithms::{init_search, reconstruct_and_draw_path, Algorithm};
+use crate::domain::cell::AlgoState;
+use crate::state::shared_state::SharedState;
+use std::time::Instant;
 
-pub struct DFS(pub Arc<AtomicBool>);
+#[allow(clippy::upper_case_acronyms)]
+pub struct DFS {
+    state: SharedState,
+}
+
+impl DFS {
+    pub fn new(state: SharedState) -> Self {
+        Self { state }
+    }
+}
 
 impl Algorithm for DFS {
-    fn search(&self, state: SharedState) {
-        let mut reachable_cells: VecDeque<Tile> = VecDeque::new();
-        let mut visited_cells: Vec<Tile> = Vec::new();
-        let mut ancestral_cells: HashMap<Tile, Tile> = HashMap::new();
+    fn search(&self) {
+        log::info!("DFS: start");
+        let t1 = Instant::now();
 
-        let start_cell = state.get().field().get_cell(0, 0).clone();
-        start_cell.get().set_state(CellState::Start);
+        let speed = self.state.speed();
+        let size = init_search(&self.state);
 
-        let end_coords_value = (state.get().field().cells.len() - 1) as u16;
-        let end_cell = state
-            .get()
-            .field()
-            .get_cell(end_coords_value, end_coords_value)
-            .clone();
-        end_cell.get().set_state(CellState::End);
+        let mut stack = VecDeque::new();
+        let mut visited: HashMap<(usize, usize), (usize, usize)> = HashMap::new();
 
-        reachable_cells.push_front(start_cell.clone());
-        visited_cells.push(start_cell.clone());
+        {
+            let binding = &mut self.state.lock();
+            binding.field_mut().mark_visited(0, 0);
+        }
+        stack.push_back((0_usize, 0_usize));
 
-        while let Some(current_cell) = reachable_cells.pop_front() {
-            if self.0.load(Ordering::Relaxed) {
-                break;
-            }
-            state.wait(25.0);
-            println!(
-                "r {} | v {} | a {}",
-                reachable_cells.len(),
-                visited_cells.len(),
-                ancestral_cells.len()
-            );
-            current_cell.get().set_state(CellState::Visited);
-
-            if current_cell == end_cell {
-                let mut cell = end_cell.clone();
-                let mut path: Vec<Tile> = Vec::new();
-
-                while let Some(parent) = ancestral_cells.get(&cell) {
-                    path.push(cell.clone());
-                    cell = parent.clone();
-                }
-                path.push(start_cell.clone());
-                path.reverse();
-                println!("p {}", path.len());
-                colorize_path(path);
-                break;
+        while let Some((x, y)) = stack.pop_back() {
+            // LIFO
+            if self.state.should_stop() {
+                log::info!("DFS: stopped by user");
+                return;
             }
 
-            let neighbor_cells = state
-                .get()
-                .field()
-                .check_cell_neighbors(current_cell.clone());
-            for neighbor_cell in neighbor_cells {
-                if visited_cells.contains(&neighbor_cell) {
-                    continue;
-                }
+            self.state.wait(25.0, speed);
 
-                reachable_cells.push_front(neighbor_cell.clone());
-                visited_cells.push(neighbor_cell.clone());
-                ancestral_cells.insert(neighbor_cell.clone(), current_cell.clone());
+            if (x, y) == (size - 1, size - 1) {
+                log::info!("DFS: reached end at ({}, {})", x, y);
+                log::info!("DFS: elapsed time: {:?}", Instant::now() - t1);
+                reconstruct_and_draw_path(&self.state, &visited, (x, y), (0, 0));
+                return;
+            }
+
+            let neighbors = {
+                let binding = &self.state.lock();
+                binding.field().get_neighbors(x, y)
+            };
+
+            let mut is_end = false;
+            let mut end_pos = (0, 0);
+
+            {
+                let mut guard = self.state.lock();
+                let field = guard.field_mut();
+
+                for (nx, ny) in neighbors {
+                    if let Some(cell) = field.get_mut(nx, ny) {
+                        if cell.is_walkable() {
+                            cell.set_algo_state(AlgoState::Visited);
+                            visited.insert((nx, ny), (x, y));
+
+                            if cell.is_end() {
+                                is_end = true;
+                                end_pos = (nx, ny);
+                                break;
+                            }
+
+                            stack.push_back((nx, ny));
+                        }
+                    }
+                }
+            }
+
+            if is_end {
+                log::info!("DFS: found end at ({}, {})", end_pos.0, end_pos.1);
+                log::info!("DFS: elapsed time: {:?}", Instant::now() - t1);
+                reconstruct_and_draw_path(&self.state, &visited, end_pos, (0, 0));
+                return;
             }
         }
+
+        log::warn!("DFS: no path found");
     }
 }

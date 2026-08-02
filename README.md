@@ -1,34 +1,53 @@
-# Pathfinders
+# Pathfinders Visualizer
 
+A high-performance, real-time visualization of classic pathfinding and graph traversal algorithms, built with Rust. 
 
-The project is a simple visualization of algorithms such as:
-
-- Breadth first search
-- Depth first search
-- Greedy best first search
-- Dijkstra
-- A_Star
+This project demonstrates a clean, layered architecture, separating domain logic, algorithms, configuration, and presentation layers, ensuring maintainability and testability.
 
 <div style="display: flex; flex-direction: row; flex-wrap: nowrap;">
-<img src="./assets/menu.png" width="49%" style="margin-right: 5px" />
-<img src="./assets/a_star.gif" width="48%" />
+  <img src="./assets/menu.png" width="49%" style="margin-right: 5px" alt="Main Menu" />
+  <img src="./assets/a_star.gif" width="48%" alt="A* Algorithm Visualization" />
 </div>
 
 ---
 
+[![Rust](https://img.shields.io/badge/rust-1.70+-orange.svg)](https://www.rust-lang.org)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Latest Version](https://img.shields.io/github/v/tag/killpop3770/pathfinders?sort=semver&label=version)](https://github.com/killpop3770/pathfinders)
 
-## Build and Run
 
-First, make sure the following are installed:
+## ✨ Features
 
-1. [Rust](https://www.rust-lang.org/tools/install) 🦀
+- **Multiple Algorithms**: BFS, DFS, Greedy Best-First Search, Dijkstra, and A*.
+- **Layered Architecture**: Strict separation of `domain`, `algorithms`, `config`, and `presentation` layers.
+- **High Performance**: Optimized 1D flat-vector grid representation and minimal mutex locking for smooth 60 FPS rendering.
+- **Configurable**: Easy customization of grid size, cell size, and animation speed via `config.toml`.
+- **Interactive**: Draw and erase walls dynamically using the mouse.
 
-In order to build, first clone the github repo:
+
+## 🏗️ Project Structure
 
 ```sh
-git clone https://github.com/killpop3770/pathfinder_a_star
-cd pathfinder_a_star
+src/
+├── domain/         # Core data structures (Cell, Field) with zero external dependencies
+├── algorithms/     # Pathfinding logic (BFS, A*, etc.) implementing the Algorithm trait
+├── config/         # Configuration parsing (TOML) and application constants
+├── presentation/   # UI rendering (Piston) and event handling
+└── state/          # Thread-safe state management (SharedState)
+```
+
+## 🚀 Build and Run
+
+
+### Prerequisites
+Make sure you have [Rust](https://www.rust-lang.org/tools/install) installed on your system.
+
+
+### Installation
+Clone the repository and navigate to the project directory:
+```sh
+git clone https://github.com/killpop3770/pathfinders.git
+cd pathfinders
 ```
 
 Then run:
@@ -37,20 +56,27 @@ Then run:
 cargo build && cargo run
 ```
 
-## Hints
 
-The control is carried out with the mouse or:
+## 🎮 Controls
+- Mouse Left Click: Toggle cell state between Empty and Blocked (Wall).
+- Keys 1 - 5: Quickly start a specific algorithm from the main menu.
+- Esc: Stop the current algorithm and return to the main menu.
 
-- Keys 1-5 to call algorithm
-- "Esc" key to return to the main menu
 
-## TODO
-- [x] minimal viable product
-- [ ] make gradient for cell cost
-- [ ] make one/two default map/maze for all algorithms
-- [ ] handle error from threads
+## 🛣️ Roadmap (TODO)
+
+- [x] Minimal Viable Product (MVP) with basic algorithms and UI
+- [x] Refactor to a strict layered architecture (Domain, Algorithms, Config, Presentation)
+- [ ] **Advanced Maze Generation**: Replace random noise with proper algorithms (Recursive Backtracker, Prim's, Perlin Noise)
+- [ ] **Custom Maps**: Add support for loading and saving maps from/to files (e.g., JSON or custom format)
+- [ ] **Runtime Controls**: Add ability to change animation speed on the fly (e.g., via `+`/`-` keys or mouse wheel)
+- [ ] **On-screen Statistics**: Display real-time overlay with visited cells count, path length, elapsed time, and current speed
+- [ ] **Comprehensive Testing**: Add unit and integration tests for the `domain` and `algorithms` layers
+- [ ] **Architectural Linting**: Integrate `dylint` or custom `archtest` to enforce layer boundaries and prevent dependency cycles
+- [ ] **Robust Error Handling**: Improve graceful recovery and error reporting from background algorithm threads
 
 
 ## Acknowledgements
 
-- [piston_window](https://github.com/PistonDevelopers/piston_window)
+- [piston_window](https://github.com/PistonDevelopers/piston_window) for the 2D rendering engine.
+- The Rust community for excellent documentation and crates (serde, toml, log).

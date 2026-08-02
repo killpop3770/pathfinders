@@ -1,73 +1,85 @@
+use crate::algorithms::{init_search, reconstruct_and_draw_path, Algorithm};
+use crate::domain::cell::AlgoState;
+use crate::state::shared_state::SharedState;
 use std::collections::{HashMap, VecDeque};
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::Instant;
 
-use crate::algorithms::{colorize_path, Algorithm};
-use crate::cell::{CellState, Tile};
-use crate::state::SharedState;
+#[allow(clippy::upper_case_acronyms)]
+pub struct BFS {
+    state: SharedState,
+}
 
-pub struct BFS(pub Arc<AtomicBool>);
+impl BFS {
+    pub fn new(state: SharedState) -> Self {
+        Self { state }
+    }
+}
 
 impl Algorithm for BFS {
-    fn search(&self, state: SharedState) {
-        let mut reachable_cells: VecDeque<Tile> = VecDeque::new();
-        let mut visited_cells: Vec<Tile> = Vec::new();
-        let mut ancestral_cells: HashMap<Tile, Tile> = HashMap::new();
+    fn search(&self) {
+        log::info!("BFS: start");
+        let t1 = Instant::now();
 
-        let start_cell = state.get().field().get_cell(0, 0).clone();
-        start_cell.get().set_state(CellState::Start);
+        let speed = self.state.speed();
+        let size = init_search(&self.state);
+        log::info!("BFS: field size = {}", size);
 
-        let end_coords_value = (state.get().field().cells.len() - 1) as u16;
-        let end_cell = state
-            .get()
-            .field()
-            .get_cell(end_coords_value, end_coords_value)
-            .clone();
-        end_cell.get().set_state(CellState::End);
+        let mut queue = VecDeque::new();
+        let mut visited: HashMap<(usize, usize), (usize, usize)> = HashMap::new();
 
-        visited_cells.push(start_cell.clone());
-        reachable_cells.push_front(start_cell.clone());
+        {
+            let binding = &mut self.state.lock();
+            binding.field_mut().mark_visited(0, 0);
+        }
+        queue.push_back((0_usize, 0_usize));
 
-        while let Some(current_cell) = reachable_cells.pop_front() {
-            if self.0.load(Ordering::Relaxed) {
-                break;
-            }
-            state.wait(25.0);
-            println!(
-                "r {} | v {} | a {}",
-                reachable_cells.len(),
-                visited_cells.len(),
-                ancestral_cells.len()
-            );
-            current_cell.get().set_state(CellState::Visited);
-
-            if current_cell == end_cell {
-                let mut cell = end_cell.clone();
-                let mut path: Vec<Tile> = Vec::new();
-
-                while let Some(parent) = ancestral_cells.get(&cell) {
-                    path.push(cell.clone());
-                    cell = parent.clone();
-                }
-
-                path.push(start_cell.clone());
-                path.reverse();
-                println!("p {}", path.len());
-                colorize_path(path);
-                break;
+        while let Some((x, y)) = queue.pop_front() {
+            if self.state.should_stop() {
+                log::info!("BFS: finished");
+                log::info!("BFS: stopped by user");
+                let t2 = Instant::now();
+                log::info!("BFS: elapsed time: {:?}", t2 - t1);
+                return;
             }
 
-            let neighbors = state
-                .get()
-                .field()
-                .check_cell_neighbors(current_cell.clone());
-            for neighbor_cell in neighbors {
-                if visited_cells.contains(&neighbor_cell) {
-                    continue;
+            self.state.wait(25.0, speed);
+
+            let neighbors = {
+                let binding = &self.state.lock();
+                binding.field().get_neighbors(x, y)
+            };
+
+            let mut is_end = false;
+            let mut end_pos = (0, 0);
+
+            {
+                let guard = &mut self.state.lock();
+                let field = guard.field_mut();
+
+                for (nx, ny) in neighbors {
+                    if let Some(cell) = field.get_mut(nx, ny) {
+                        if cell.is_walkable() {
+                            cell.set_algo_state(AlgoState::Visited);
+                            visited.insert((nx, ny), (x, y));
+
+                            if cell.is_end() {
+                                is_end = true;
+                                end_pos = (nx, ny);
+                                break;
+                            }
+
+                            queue.push_back((nx, ny));
+                        }
+                    }
                 }
-                visited_cells.push(neighbor_cell.clone());
-                reachable_cells.push_back(neighbor_cell.clone());
-                ancestral_cells.insert(neighbor_cell.clone(), current_cell.clone());
+            }
+
+            if is_end {
+                log::info!("BFS: found end at ({}, {})", end_pos.0, end_pos.1);
+                let t2 = Instant::now();
+                log::info!("BFS: elapsed time: {:?}", (t2 - t1));
+                reconstruct_and_draw_path(&self.state, &visited, (end_pos.0, end_pos.1), (0, 0));
+                return;
             }
         }
     }

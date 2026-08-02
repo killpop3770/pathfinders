@@ -1,98 +1,124 @@
 use std::cmp::Reverse;
 use std::collections::{BinaryHeap, HashMap};
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
 
-use crate::algorithms::{colorize_path, heuristic_factor, Algorithm, PriorityCell};
-use crate::cell::{CellState, Tile};
-use crate::state::SharedState;
+use crate::algorithms::{
+    heuristic_manhattan, init_search, reconstruct_and_draw_path, Algorithm, PriorityCell,
+};
+use crate::domain::cell::AlgoState;
+use crate::state::shared_state::SharedState;
+use std::time::Instant;
 
-pub struct AStar(pub Arc<AtomicBool>);
+#[allow(clippy::upper_case_acronyms)]
+pub struct AStar {
+    state: SharedState,
+}
+
+impl AStar {
+    pub fn new(state: SharedState) -> Self {
+        Self { state }
+    }
+}
 
 impl Algorithm for AStar {
-    fn search(&self, state: SharedState) {
-        let mut reachable_cells: BinaryHeap<Reverse<PriorityCell>> = BinaryHeap::new();
-        let mut visited_cells: Vec<Tile> = Vec::new();
-        let mut ancestral_cells: HashMap<Tile, Tile> = HashMap::new();
-        let mut cost_so_far: HashMap<Tile, i16> = HashMap::new();
+    fn search(&self) {
+        log::info!("A*: start");
+        let t1 = Instant::now();
 
-        let start_cell = state.get().field().get_cell(0, 0).clone();
-        start_cell.get().set_state(CellState::Start);
+        let speed = self.state.speed();
+        let size = init_search(&self.state);
+        let end_pos = (size - 1, size - 1);
 
-        let end_coords_value = (state.get().field().cells.len() - 1) as u16;
-        let end_cell = state
-            .get()
-            .field()
-            .get_cell(end_coords_value, end_coords_value)
-            .clone();
-        end_cell.get().set_state(CellState::End);
+        let mut queue: BinaryHeap<Reverse<PriorityCell>> = BinaryHeap::new();
+        let mut visited: HashMap<(usize, usize), (usize, usize)> = HashMap::new();
+        let mut cost_so_far: HashMap<(usize, usize), u16> = HashMap::new();
 
-        let priority = start_cell.get().cost;
-        reachable_cells.push(Reverse(PriorityCell {
-            tile: start_cell.clone(),
-            cost: priority,
-        }));
-        visited_cells.push(start_cell.clone());
+        {
+            let binding = &mut self.state.lock();
+            let start_cost = binding.field().cell(0, 0).cost;
+            binding.field_mut().mark_visited(0, 0);
+            cost_so_far.insert((0, 0), start_cost);
+            let h = heuristic_manhattan(0, 0, end_pos.0, end_pos.1);
+            queue.push(Reverse(PriorityCell {
+                x: 0,
+                y: 0,
+                cost: (start_cost as i32) + h,
+            }));
+        }
 
-        let start_cell_cost = start_cell.get().cost;
-        cost_so_far.insert(start_cell.clone(), start_cell_cost);
+        while let Some(Reverse(current)) = queue.pop() {
+            let (x, y) = (current.x, current.y);
 
-        while let Some(current_cell) = reachable_cells.pop() {
-            if self.0.load(Ordering::Relaxed) {
-                break;
-            }
-            state.wait(25.0);
-            println!(
-                "r {} | v {} | a {}",
-                reachable_cells.len(),
-                visited_cells.len(),
-                ancestral_cells.len()
-            );
-            let current_cell = current_cell.0.tile.clone();
-            current_cell.get().set_state(CellState::Visited);
-
-            if current_cell == end_cell {
-                let mut cell = end_cell.clone();
-                let mut path: Vec<Tile> = Vec::new();
-
-                while let Some(parent) = ancestral_cells.get(&cell) {
-                    path.push(cell.clone());
-                    cell = parent.clone();
-                }
-                path.push(start_cell.clone());
-                path.reverse();
-                println!("p {}", path.len());
-                colorize_path(path);
-                break;
+            if self.state.should_stop() {
+                log::info!("A*: stopped by user");
+                return;
             }
 
-            let neighbor_cells = state
-                .get()
-                .field()
-                .check_cell_neighbors(current_cell.clone());
-            for neighbor_cell in neighbor_cells {
-                if visited_cells.contains(&neighbor_cell) {
-                    continue;
-                }
+            self.state.wait(25.0, speed);
 
-                let current_cell_cost = current_cell.get().cost;
-                let neighbor_cell_cost = neighbor_cell.get().cost;
-                let new_cost = current_cell_cost + neighbor_cell_cost;
-                if cost_so_far.get(&neighbor_cell.clone()).is_none()
-                    || new_cost < *cost_so_far.get(&neighbor_cell.clone()).unwrap()
-                {
-                    cost_so_far.insert(neighbor_cell.clone(), new_cost);
+            if (x, y) == end_pos {
+                log::info!("A*: reached end at ({}, {})", x, y);
+                log::info!("A*: elapsed time: {:?}", Instant::now() - t1);
+                reconstruct_and_draw_path(&self.state, &visited, (x, y), (0, 0));
+                return;
+            }
 
-                    let priority =
-                        new_cost + heuristic_factor(neighbor_cell.clone(), end_cell.clone());
-                    reachable_cells.push(Reverse(PriorityCell {
-                        tile: neighbor_cell.clone(),
-                        cost: priority,
-                    }));
-                    visited_cells.push(neighbor_cell.clone());
-                    ancestral_cells.insert(neighbor_cell.clone(), current_cell.clone());
+            let neighbors = {
+                let binding = &self.state.lock();
+                binding.field().get_neighbors(x, y)
+            };
+
+            let current_g = cost_so_far[&(x, y)];
+
+            let mut is_end = false;
+            let mut end_pos_found = (0, 0);
+
+            {
+                let mut guard = self.state.lock();
+                let field = guard.field_mut();
+
+                for (nx, ny) in neighbors {
+                    if let Some(cell) = field.get_mut(nx, ny) {
+                        if cell.is_walkable() {
+                            let new_g = current_g + cell.cost;
+                            let is_better = cost_so_far
+                                .get(&(nx, ny))
+                                .is_none_or(|&old_g| new_g < old_g);
+
+                            if is_better {
+                                cost_so_far.insert((nx, ny), new_g);
+                                visited.insert((nx, ny), (x, y));
+                                cell.set_algo_state(AlgoState::Visited);
+
+                                if cell.is_end() {
+                                    is_end = true;
+                                    end_pos_found = (nx, ny);
+                                    break;
+                                }
+
+                                let h = heuristic_manhattan(nx, ny, end_pos.0, end_pos.1);
+                                queue.push(Reverse(PriorityCell {
+                                    x: nx,
+                                    y: ny,
+                                    cost: (new_g as i32) + h,
+                                }));
+                            }
+                        }
+                    }
                 }
+            }
+
+            if is_end {
+                log::info!("A*: found end at ({}, {})", end_pos_found.0, end_pos_found.1);
+                log::info!("A*: elapsed time: {:?}", Instant::now() - t1);
+                reconstruct_and_draw_path(&self.state, &visited, end_pos_found, (0, 0));
+                return;
             }
         }
+
+        log::warn!("A*: no path found");
+    }
+
+    fn uses_cell_cost(&self) -> bool {
+        true
     }
 }
