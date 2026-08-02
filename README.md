@@ -57,8 +57,7 @@ cargo build && cargo run
 ```
 
 
-## 🎮 Controls
-- Mouse Left Click: Toggle cell state between Empty and Blocked (Wall).
+## 🎮 Controls (Hints)
 - Keys 1 - 5: Quickly start a specific algorithm from the main menu.
 - Esc: Stop the current algorithm and return to the main menu.
 
