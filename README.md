@@ -67,6 +67,7 @@ cargo build && cargo run
 
 - [x] Minimal Viable Product (MVP) with basic algorithms and UI
 - [x] Refactor to a strict layered architecture (Domain, Algorithms, Config, Presentation)
+- [ ] **Core algos/graphic**: Replace core algos and graphic logic in outer crates (libs)
 - [ ] **Advanced Maze Generation**: Replace random noise with proper algorithms (Recursive Backtracker, Prim's, Perlin Noise)
 - [ ] **Custom Maps**: Add support for loading and saving maps from/to files (e.g., JSON or custom format)
 - [ ] **Runtime Controls**: Add ability to change animation speed on the fly (e.g., via `+`/`-` keys or mouse wheel)
