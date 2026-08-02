@@ -22,7 +22,6 @@ This project demonstrates a clean, layered architecture, separating domain logic
 - **Layered Architecture**: Strict separation of `domain`, `algorithms`, `config`, and `presentation` layers.
 - **High Performance**: Optimized 1D flat-vector grid representation and minimal mutex locking for smooth 60 FPS rendering.
 - **Configurable**: Easy customization of grid size, cell size, and animation speed via `config.toml`.
-- **Interactive**: Draw and erase walls dynamically using the mouse.
 
 
 ##  Performance
