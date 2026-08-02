@@ -25,6 +25,28 @@ This project demonstrates a clean, layered architecture, separating domain logic
 - **Interactive**: Draw and erase walls dynamically using the mouse.
 
 
+##  Performance
+
+After major refactoring (v0.2.0 → v1.0.0), the application shows significant improvements:
+
+- **Memory usage**: -11.9% (from 11.47 MB to 10.11 MB)
+- **Execution time**: -73% (3.7× faster)
+- **Heap efficiency**: -12.0% less fragmentation
+
+See [benchmarks/](./benchmarks/) for detailed measurements and methodology.
+
+### Memory Usage Comparison
+
+- v0.2.0: ████████████████████ 11.47 MB
+- v1.0.0: ████████████████     10.11 MB (-11.9%)
+
+
+### Execution Time
+
+- v0.2.0: ████████████████████ ~11.0s
+- v1.0.0: █████                ~3.0s (-73%)
+
+
 ## 🏗️ Project Structure
 
 ```sh
